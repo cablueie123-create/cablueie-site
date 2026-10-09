@@ -185,7 +185,7 @@ fieldset{border:none;margin:0;padding:0;display:grid;gap:6px;min-width:0}
 .est-rows{display:grid;gap:6px;margin:0}
 .est-rows div{display:flex;justify-content:space-between;gap:12px;font-size:.93rem;border-bottom:1px dashed var(--line);padding-bottom:6px}
 .est-rows dt{color:var(--muted)}
-.est-rows dd{margin:0;font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+.est-rows dd{margin:0;font-weight:500;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .est-total{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
 .est-total strong{font-family:var(--font-display);font-size:1.9rem;font-weight:800;font-variant-numeric:tabular-nums}
 .notice{border-radius:10px;padding:10px 12px;font-size:.9rem}
