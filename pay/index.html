@@ -28,6 +28,7 @@
   <h1>お支払い</h1>
   <div class="notice info" id="pay-loading">お支払いの情報を読み込んでいます…</div>
   <div class="notice warn" id="pay-error" role="alert" hidden></div>
+  <div class="notice ok" id="pay-notice" role="status" hidden></div>
 
   <section class="pay-card" id="pay-bill" hidden aria-labelledby="bill-h">
     <h2 id="bill-h" class="small muted" style="font-size:.9rem;font-weight:700">ご請求の内容</h2>
@@ -38,13 +39,15 @@
       <div><dt>受付番号</dt><dd id="bill-id">—</dd></div>
       <div><dt>内容</dt><dd id="bill-label">—</dd></div>
       <div><dt>お支払い期限</dt><dd id="bill-due">—</dd></div>
+      <div id="bill-card-row" hidden><dt>保証用カード</dt><dd id="bill-card">—</dd></div>
     </dl>
     <p id="bill-done" hidden></p>
 
     <div class="pay-actions" id="pay-actions" hidden>
-      <button type="button" class="btn" id="btn-card" hidden>カード・電子決済・コンビニ払いなどで払う</button>
-      <p class="pay-methods" id="methods-note" hidden>Visa・Mastercard・JCB・American Express などのカード、電子決済、コンビニ払いが使えます。お支払いの画面は決済代行会社 Stripe のものです。</p>
-      <button type="button" class="btn ghost" id="btn-bank" hidden>銀行振込で払う</button>
+      <button type="button" class="btn" id="btn-card" hidden>カード・電子決済・銀行振込・コンビニ払いで払う</button>
+      <p class="pay-methods" id="methods-note" hidden>Visa・Mastercard・JCB・American Express などのカード、電子決済、銀行振込、コンビニ払いが使えます。銀行振込を選ぶと、お客様専用の振込先が表示され、入金は自動で確認されます。お支払いの画面は決済代行会社 Stripe のものです。</p>
+      <p class="pay-methods" id="save-note" hidden>カードで払うと、そのカードが保証用カードとして登録されます（別に登録する必要はありません）。</p>
+      <button type="button" class="btn ghost" id="btn-bank" hidden>当方の口座に振り込む</button>
     </div>
   </section>
 
@@ -69,6 +72,13 @@
     <h2 id="result-h" style="font-size:1.25rem">お支払いが完了しました</h2>
     <p id="result-text"></p>
     <a class="btn ghost" href="../" style="justify-self:start">トップページへ</a>
+  </section>
+
+  <section class="pay-card guard" id="pay-guard" hidden aria-labelledby="guard-h">
+    <h2 id="guard-h">保証用カードの登録</h2>
+    <p>お渡しの前に、保証用のクレジットカード（またはデビットカード）を登録してください。<strong>今は請求されません。</strong></p>
+    <p class="small muted">返却後の燃料代・延滞料金・違約金などがあるときだけ、内容をお知らせしたうえで、このカードに請求します（<a href="../terms/" target="_blank" rel="noopener">貸渡約款 第8条</a>）。カードの番号は決済代行会社 Stripe が管理し、当方は持ちません。ご利用の終了から90日後に登録を削除します。</p>
+    <button type="button" class="btn" id="btn-guard">保証用カードを登録する</button>
   </section>
 </main>
 <footer class="site-foot"><div class="wrap foot-in"><strong>Cablueie（カブリエ）</strong><span>奄美大島の月極レンタカー　／　事業者：中江智広　／　自家用自動車有償貸渡業 許可番号：<span data-license>申請中</span></span><nav class="foot-nav" aria-label="サイト内のリンク"><a href="../">トップ</a><a href="../#price">料金</a><a href="../#request">見積もりと申し込み</a><a href="../terms/">貸渡約款</a><a href="../legal/">特定商取引法に基づく表記</a><a href="../#privacy">個人情報の取り扱い</a></nav></div></footer>
