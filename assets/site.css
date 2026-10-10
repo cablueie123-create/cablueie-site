@@ -237,6 +237,9 @@ img{max-width:100%}
 .upload.has{border-style:solid;border-color:var(--sea);background:var(--surface)}
 .upload.err{border-color:var(--warn);background:var(--warn-soft)}
 .upload:focus-within{outline:3px solid var(--sea);outline-offset:2px}
+.done-line{display:grid;gap:8px;padding:14px 16px;border:2px solid #06C755;border-radius:12px;background:var(--surface)}
+.done-line p{margin:0}
+.done-line .btn{justify-self:start}
 .check{display:flex;gap:10px;align-items:flex-start;font-size:.93rem;cursor:pointer}
 .check input{margin-top:.38em;width:1.1em;height:1.1em;accent-color:var(--sea);flex:none}
 .field.invalid input,.field.invalid select,.field.invalid textarea{border-color:var(--warn);box-shadow:0 0 0 3px var(--warn-soft)}
@@ -329,6 +332,18 @@ footer.site-foot{background:var(--sea-deep);margin-top:24px}
 .pay-status[data-s="pending"]{background:var(--warn-soft);color:var(--warn)}
 .pay-status[data-s="unpaid"]{background:var(--sea-soft);color:var(--sea)}
 .linkish{background:none;border:0;padding:0;font:inherit;color:var(--sea);text-decoration:underline;cursor:pointer;justify-self:start}
+
+/* 振込・コンビニ払いの手続き中 */
+.pay-wait{display:grid;gap:10px}
+.pay-wait .btn{width:100%;padding:12px 18px}
+.switch-confirm{display:grid;gap:10px;padding:14px 16px;border-radius:12px;background:var(--warn-soft)}
+.switch-confirm p{margin:0}
+.switch-btns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:420px){ .switch-btns{grid-template-columns:minmax(0,1fr)} }
+/* 書類の提出ページ */
+.doc-form{display:grid;gap:14px}
+.doc-kinds{display:grid;gap:8px}
+.doc-kinds label.off{opacity:.5}
 
 /* 保証用カード */
 .pay-card.guard{border:2px solid var(--sea)}

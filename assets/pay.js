@@ -33,6 +33,7 @@
   function renderBill(b){
     bill = b;
     show('pay-loading', false); show('pay-result', false); show('pay-bill', true);
+    show('pay-wait', false); show('switch-confirm', false);
     renderGuard(b);
     $('bill-amount').textContent = yen(b.amount);
     $('bill-name').textContent = (b.name || '') + ' 様';
@@ -43,16 +44,56 @@
     function finish(state, label, text){ st.dataset.s = state; st.textContent = label; done.hidden = false; done.textContent = text; show('pay-actions', false); }
     if (b.cancelled) return finish('none', 'キャンセル', 'このご予約はキャンセルになっています。ご不明な点はお問い合わせください。');
     if (b.status === '入金済み') return finish('paid', 'お支払い済み', 'このお支払いは済んでいます（' + (b.method || '') + (b.paidAt ? '・' + b.paidAt : '') + '）。ありがとうございました。');
+    if (b.status === '確認中' && b.pending === 'async') return renderWait(b, st, done);
     if (b.status === '確認中') return finish('pending', '確認中',
       b.pending === 'review' ? 'お支払いを受け付けました。金額の確認が必要なため、確認でき次第ご連絡します。もう一度お支払いいただく必要はありません。' :
-      (b.pending === 'card' ? 'ご登録のカードでのお支払いを確認しています。しばらくしてから、このページを開き直してください。' :
-        '銀行振込・コンビニ払いの入金をお待ちしています。振込先やお支払い番号は、Stripe から届くメールでご確認ください。入金が確認できたら、メールでお知らせします。'));
+        'ご登録のカードでのお支払いを確認しています。しばらくしてから、このページを開き直してください。');
     st.dataset.s = 'unpaid'; st.textContent = '未払い';
     done.hidden = true;
     show('pay-actions', true);
     $('btn-card').hidden = !b.stripe; $('methods-note').hidden = !b.stripe; $('save-note').hidden = !(b.stripe && b.cardNeeded);
     $('btn-bank').hidden = !b.bank;
     if (!b.stripe && !b.bank){ done.hidden = false; done.textContent = 'お支払いの方法を準備しています。お手数ですが、お問い合わせください。'; }
+  }
+
+  /* 銀行振込・コンビニ払いの手続き中：振込先（お支払い番号）を見る・まだ払っていなければ別の方法に変える */
+  function renderWait(b, st, done){
+    var w = b.wait || {}, konbini = w.kind === 'konbini', bank = w.kind === 'bank';
+    st.dataset.s = 'pending'; st.textContent = '入金待ち';
+    show('pay-actions', false);
+    done.hidden = false;
+    done.textContent = bank ? '銀行振込の入金をお待ちしています。振込先は、下の「振込先を見る」か、Stripe から届くメールでご確認ください。お客様専用の振込先なので、入金は自動で確認され、メールでお知らせします。' +
+        (w.partial && w.remaining != null ? '一部の入金を確認しました。残りの ' + yen(w.remaining) + '円 をお振り込みください。' : '')
+      : (konbini ? 'コンビニでのお支払いをお待ちしています。お支払い番号は、下の「お支払い番号を見る」か、Stripe から届くメールでご確認ください。お支払いが確認できたら、メールでお知らせします。'
+        : '銀行振込・コンビニ払いの入金をお待ちしています。振込先やお支払い番号は、Stripe から届くメールでご確認ください。入金が確認できたら、メールでお知らせします。');
+    var link = $('wait-link');
+    link.hidden = !w.url;
+    if (w.url){ link.href = w.url; link.textContent = konbini ? 'お支払い番号を見る' : '振込先を見る'; }
+    var sw = $('btn-switch');
+    sw.hidden = !w.canSwitch;
+    sw.textContent = konbini ? 'コンビニ払いをやめて別の方法で払う' : '振込をやめて別の方法で払う';
+    $('switch-text').textContent = konbini
+      ? 'まだコンビニで支払っていない場合だけ、進んでください。変更したあとは、前のお支払い番号では支払わないでください（もし両方で支払われた場合は、確認して返金します）。'
+      : 'まだ振り込んでいない場合だけ、進んでください。変更したあとは、前の振込先には振り込まないでください（もし両方で支払われた場合は、確認して返金します）。すでに振り込んだ場合は、変更せずに入金の確認をお待ちください。';
+    show('pay-wait', !!(w.url || w.canSwitch));
+  }
+  function askSwitch(){ show('switch-confirm', true); $('btn-switch').hidden = true; }
+  function noSwitch(){ show('switch-confirm', false); $('btn-switch').hidden = false; }
+  function doSwitch(){
+    clearError();
+    var btn = $('btn-switch-go'), label = btn.textContent;
+    btn.disabled = true; btn.textContent = '変更しています…';
+    api({ api: 'switch', r: ids.r, n: ids.n, k: ids.k })
+      .then(function(d){
+        if (d.result === 'paid') return showResult('paid', d.bill);
+        renderBill(d.bill);
+        if (d.bill.status === '未払い' && d.bill.stripe) openCard();
+      })
+      .catch(function(err){
+        error(err.message);
+        api({ api: 'bill', r: ids.r, n: ids.n, k: ids.k }).then(renderBill).catch(function(){});
+      })
+      .then(function(){ btn.disabled = false; btn.textContent = label; });
   }
 
   function loadStripe(){
@@ -136,9 +177,9 @@
         (b.card && !b.extra ? '保証用カード（' + String(b.card).replace(/（.*$/, '') + '）が登録されています。' : '') +
         (b.cardNeeded ? '最後に、下から保証用のカードを登録してください。' : '');
     } else {
-      st.dataset.s = 'pending'; st.textContent = '入金待ち'; h.textContent = 'お振込み・お支払いをお待ちしています';
-      t.textContent = '振込先（またはお支払い番号）と期限は、先ほどの画面の案内と Stripe から届くメールでご確認ください。入金が確認できたら、メールでお知らせします。' +
-        (b && b.cardNeeded ? '最後に、下から保証用のカードを登録してください。' : '');
+      // 銀行振込・コンビニ払いの手続き中：請求の画面で、振込先と「別の方法で払う」を出す
+      renderBill(b);
+      notice('お手続きを受け付けました。' + (b && b.cardNeeded ? '下から保証用のカードも登録してください。' : ''));
     }
   }
 
@@ -147,6 +188,9 @@
   $('btn-back').addEventListener('click', back);
   $('btn-back2').addEventListener('click', back);
   $('btn-guard').addEventListener('click', openGuard);
+  $('btn-switch').addEventListener('click', askSwitch);
+  $('btn-switch-no').addEventListener('click', noSwitch);
+  $('btn-switch-go').addEventListener('click', doSwitch);
 
   var sid = q.get('session_id');
   if (!CFG.api){ error('設定を読み込めませんでした。お手数ですが、お問い合わせください。'); return; }
@@ -156,6 +200,7 @@
       try { history.replaceState(null, '', location.pathname + '?r=' + encodeURIComponent(d.r) + '&n=' + d.n + '&k=' + d.k); } catch (e) {}
       if (d.result === 'open'){ renderBill(d.bill); error('お支払いは完了していません。もう一度お試しいただくか、別の方法をお選びください。'); }
       else if (d.result === 'card_open'){ renderBill(d.bill); error('カードの登録は完了していません。もう一度お試しください。'); }
+      else if (d.result === 'stale') renderBill(d.bill); // 古い画面から戻ってきた：今の請求を見せる
       else showResult(d.result, d.bill, d.card);
     }).catch(function(e){ error(e.message); });
   } else if (ids.r && ids.n && ids.k){
