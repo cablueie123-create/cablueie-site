@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>運転免許証の提出｜Cablueieレンタカー</title>
+<meta name="description" content="Cablueieレンタカーの書類の提出ページです。">
+<meta name="robots" content="noindex">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Cablueieレンタカー">
+<meta property="og:title" content="運転免許証の提出｜Cablueieレンタカー">
+<meta property="og:description" content="Cablueieレンタカーの書類の提出ページです。">
+<meta property="og:url" content="https://cablueie-rentacar.com/docs/">
+<meta property="og:image" content="https://cablueie-rentacar.com/og.png">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0A7BA3">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Zen+Kaku+Gothic+New:wght@400;500;700&amp;display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body class="subpage">
+<header class="topbar"><div class="wrap topbar-in"><a class="tb-brand" href="../"><span class="wordmark small" aria-label="Cablueie">Ca<span class="blue">blue</span>ie</span><span class="kana">レンタカー</span></a><a class="tb-link" href="../#request">見積もりと申し込み</a></div></header>
+<main class="wrap pay" id="docs">
+  <h1>運転免許証の写真の提出</h1>
+  <div class="notice info" id="doc-loading">ご予約の情報を読み込んでいます…</div>
+  <div class="notice warn" id="doc-error" role="alert" hidden></div>
+
+  <section class="pay-card" id="doc-main" hidden aria-labelledby="doc-h">
+    <h2 id="doc-h" class="small muted" style="font-size:.9rem;font-weight:700">ご予約</h2>
+    <dl class="pay-rows">
+      <div><dt>お名前</dt><dd id="doc-name">—</dd></div>
+      <div><dt>受付番号</dt><dd id="doc-id">—</dd></div>
+      <div id="doc-d2-row" hidden><dt>追加の運転者</dt><dd id="doc-d2">—</dd></div>
+    </dl>
+
+    <form id="doc-form" class="doc-form" novalidate>
+      <fieldset class="field">
+        <legend>送るもの</legend>
+        <div class="radios doc-kinds">
+          <label><input type="radio" name="doc-kind" id="kind-self" value="self" checked>ご本人の免許証（撮り直し）</label>
+          <label id="kind-driver-row"><input type="radio" name="doc-kind" id="kind-driver" value="driver">運転する人を追加する（1人まで）</label>
+        </div>
+        <span class="hint" id="kind-note" hidden></span>
+      </fieldset>
+
+      <div id="driver-area" hidden>
+        <div class="field"><label for="d-name">運転する人のお名前<span class="req-badge">必須</span></label><input type="text" id="d-name" autocomplete="off" maxlength="60"></div>
+        <label class="check"><input type="checkbox" id="d-agree"><span>この人は21歳以上で、運転免許を取って1年以上です。</span></label>
+      </div>
+
+      <p class="small muted">免許証の表と裏を撮影して選んでください。文字がはっきり読めるよう、明るい場所で撮ってください。写真は自動で小さくして送ります。</p>
+      <div class="uploads">
+        <label class="upload" id="tile-front"><input type="file" id="f-front" accept="image/*"><img alt="" hidden><span class="u-label">免許証の表<span class="req-badge">必須</span></span><span class="u-hint">タップして撮影・選択</span></label>
+        <label class="upload" id="tile-back"><input type="file" id="f-back" accept="image/*"><img alt="" hidden><span class="u-label">免許証の裏<span class="req-badge">必須</span></span><span class="u-hint">タップして撮影・選択</span></label>
+      </div>
+      <div class="form-error" id="doc-form-error" role="alert" hidden></div>
+      <button type="submit" class="btn big" id="doc-submit">送信する</button>
+      <p class="small muted">送った写真は、事業者だけが見られる非公開の場所に保存し、ご予約の確認のためだけに使います（<a href="../#privacy">個人情報の取り扱い</a>）。<strong>免許証の写真は、LINEやメールでは送らないでください。</strong></p>
+    </form>
+  </section>
+
+  <section class="pay-card" id="doc-done" hidden aria-live="polite" tabindex="-1">
+    <span class="pay-status" data-s="paid">受け取りました</span>
+    <h2 id="doc-done-h" style="font-size:1.25rem">受け取りました</h2>
+    <p id="doc-done-text"></p>
+    <a class="btn ghost" href="../" style="justify-self:start">トップページへ</a>
+  </section>
+</main>
+<footer class="site-foot"><div class="wrap foot-in"><strong>Cablueieレンタカー</strong><span>奄美大島の月極レンタカー　／　運営：Cablueie（カブリエ）中江智広　／　自家用自動車有償貸渡業 許可番号：<span data-license>申請中</span></span><nav class="foot-nav" aria-label="サイト内のリンク"><a href="../">トップ</a><a href="../#price">料金</a><a href="../#request">見積もりと申し込み</a><a href="../terms/">貸渡約款</a><a href="../legal/">特定商取引法に基づく表記</a><a href="../#privacy">個人情報の取り扱い</a></nav></div></footer>
+<script src="../config.js"></script>
+<script src="../assets/sub.js"></script>
+<script src="../assets/docs.js"></script>
+</body>
+</html>
