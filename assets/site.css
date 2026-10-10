@@ -237,6 +237,11 @@ img{max-width:100%}
 .upload.has{border-style:solid;border-color:var(--sea);background:var(--surface)}
 .upload.err{border-color:var(--warn);background:var(--warn-soft)}
 .upload:focus-within{outline:3px solid var(--sea);outline-offset:2px}
+.uses{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.use{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:grid;gap:6px;align-content:start}
+.use strong{color:var(--sea-deep,var(--sea))}
+.use p{margin:0;font-size:.92rem}
+@media (max-width:760px){ .uses{grid-template-columns:minmax(0,1fr)} }
 .done-line{display:grid;gap:8px;padding:14px 16px;border:2px solid #06C755;border-radius:12px;background:var(--surface)}
 .done-line p{margin:0}
 .done-line .btn{justify-self:start}
@@ -308,7 +313,7 @@ body.subpage{background:var(--bg)}
 .legal-table th{width:11em;background:var(--sunk);font-weight:700;white-space:nowrap}
 .legal-table tr:last-child th,.legal-table tr:last-child td{border-bottom:0}
 @media (max-width:560px){ .legal-table th,.legal-table td{display:block;width:auto;white-space:normal} .legal-table th{border-bottom:0;padding-bottom:4px} }
-footer.site-foot{background:var(--sea-deep);margin-top:24px}
+footer.site-foot{background:#086a8c;margin-top:24px}
 .foot-in{display:grid;gap:6px;padding-block:20px 36px}
 
 /* pay page */
@@ -350,4 +355,15 @@ footer.site-foot{background:var(--sea-deep);margin-top:24px}
 .pay-card.guard h2{font-size:1.05rem;margin:0}
 .pay-card.guard p{margin:0}
 .pay-card.guard .btn{width:100%;padding:14px 18px;font-size:1rem}
+
+/* 説明ページ（guide / work） */
+.doc.guide h2{font-size:1.2rem;margin:18px 0 0}
+.doc.guide ul,.doc.guide ol{padding-left:1.3em;display:grid;gap:6px;margin:0}
+.doc.guide p{margin:0}
+.crumbs{font-size:.84rem;color:var(--muted)}
+.crumbs a{color:var(--sea)}
+.cmp-table th[scope="col"]{background:var(--sunk);white-space:nowrap}
+.cmp-table tbody th{width:auto;white-space:normal}
+.cta-row{display:flex;flex-wrap:wrap;gap:10px}
+@media (max-width:560px){ .cmp-table thead{display:none} .cmp-table td::before{content:attr(data-label);display:block;font-size:.78rem;color:var(--muted);font-weight:700} .cmp-table tbody th{background:var(--sea-soft)} }
 
