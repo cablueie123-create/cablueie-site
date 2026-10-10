@@ -22,25 +22,35 @@
     show('pay-loading', false);
     var e = $('pay-error'); e.textContent = msg; e.hidden = false;
   }
-  function clearError(){ $('pay-error').hidden = true; }
+  function clearError(){ $('pay-error').hidden = true; $('pay-notice').hidden = true; }
+  function notice(msg){ var n = $('pay-notice'); n.textContent = msg; n.hidden = false; }
 
+  function renderGuard(b){
+    show('pay-guard', !!(b && b.cardNeeded));
+    $('bill-card-row').hidden = !(b && b.card);
+    $('bill-card').textContent = (b && b.card) || '';
+  }
   function renderBill(b){
     bill = b;
     show('pay-loading', false); show('pay-result', false); show('pay-bill', true);
+    renderGuard(b);
     $('bill-amount').textContent = yen(b.amount);
     $('bill-name').textContent = (b.name || '') + ' 様';
-    $('bill-id').textContent = b.id + '（' + b.kai + '回目）';
+    $('bill-id').textContent = b.id + (b.extra ? '（返却後の精算）' : (b.kai > 1 ? '（' + b.kai + '回目）' : ''));
     $('bill-label').textContent = b.label;
     $('bill-due').textContent = b.due ? jp(b.due) : '—';
     var st = $('bill-status'), done = $('bill-done');
     function finish(state, label, text){ st.dataset.s = state; st.textContent = label; done.hidden = false; done.textContent = text; show('pay-actions', false); }
     if (b.cancelled) return finish('none', 'キャンセル', 'このご予約はキャンセルになっています。ご不明な点はお問い合わせください。');
     if (b.status === '入金済み') return finish('paid', 'お支払い済み', 'このお支払いは済んでいます（' + (b.method || '') + (b.paidAt ? '・' + b.paidAt : '') + '）。ありがとうございました。');
-    if (b.status === '確認中') return finish('pending', '入金の確認中', 'コンビニでのお支払いをお待ちしています。お支払いが確認できたら、メールでお知らせします。');
+    if (b.status === '確認中') return finish('pending', '確認中',
+      b.pending === 'review' ? 'お支払いを受け付けました。金額の確認が必要なため、確認でき次第ご連絡します。もう一度お支払いいただく必要はありません。' :
+      (b.pending === 'card' ? 'ご登録のカードでのお支払いを確認しています。しばらくしてから、このページを開き直してください。' :
+        '銀行振込・コンビニ払いの入金をお待ちしています。振込先やお支払い番号は、Stripe から届くメールでご確認ください。入金が確認できたら、メールでお知らせします。'));
     st.dataset.s = 'unpaid'; st.textContent = '未払い';
     done.hidden = true;
     show('pay-actions', true);
-    $('btn-card').hidden = !b.stripe; $('methods-note').hidden = !b.stripe;
+    $('btn-card').hidden = !b.stripe; $('methods-note').hidden = !b.stripe; $('save-note').hidden = !(b.stripe && b.cardNeeded);
     $('btn-bank').hidden = !b.bank;
     if (!b.stripe && !b.bank){ done.hidden = false; done.textContent = 'お支払いの方法を準備しています。お手数ですが、お問い合わせください。'; }
   }
@@ -55,19 +65,27 @@
       document.head.appendChild(s);
     });
   }
-  function openCard(){
+  function openCard(){ openEmbedded('checkout', $('btn-card'), 'お支払いの画面を準備しています…'); }
+  function openGuard(){ openEmbedded('card', $('btn-guard'), 'カード登録の画面を準備しています…'); }
+  function openEmbedded(kind, btn, busy){
     clearError();
-    var btn = $('btn-card'), label = btn.textContent;
-    btn.disabled = true; btn.textContent = 'お支払いの画面を準備しています…';
-    Promise.all([api({ api: 'checkout', r: ids.r, n: ids.n, k: ids.k }), loadStripe()])
+    var label = btn.textContent;
+    btn.disabled = true; btn.textContent = busy;
+    Promise.all([api({ api: kind, r: ids.r, n: ids.n, k: ids.k }), loadStripe()])
       .then(function(arr){
-        var data = arr[0], stripe = arr[1](data.publishableKey);
+        var data = arr[0];
+        if (data.already){
+          // Stripe 側ですでに登録済みだった
+          return api({ api: 'bill', r: ids.r, n: ids.n, k: ids.k }).then(function(b){ showResult('card', b, data.card); return null; });
+        }
+        var stripe = arr[1](data.publishableKey);
         var opts = { fetchClientSecret: function(){ return Promise.resolve(data.clientSecret); } };
         return stripe.createEmbeddedCheckoutPage ? stripe.createEmbeddedCheckoutPage(opts) : stripe.initEmbeddedCheckout(opts);
       })
       .then(function(c){
+        if (!c) return;
         checkout = c;
-        show('pay-bill', false); show('pay-checkout', true);
+        show('pay-bill', false); show('pay-bank', false); show('pay-result', false); show('pay-guard', false); show('pay-checkout', true);
         c.mount('#checkout');
         $('pay-checkout').scrollIntoView({ behavior: 'smooth', block: 'start' });
       })
@@ -80,6 +98,7 @@
   function back(){
     if (checkout){ try { checkout.destroy(); } catch (e) {} checkout = null; }
     show('pay-checkout', false); show('pay-bank', false); show('pay-bill', true);
+    renderGuard(bill);
   }
   function openBank(){
     clearError();
@@ -89,16 +108,37 @@
     $('bank-amount').textContent = yen(bill.amount) + '円';
     $('bank-name').textContent = digits + '　＋　お名前（カタカナ）　例：' + digits + ' ヤマダハナコ';
   }
-  function showResult(kind, b){
-    show('pay-loading', false); show('pay-bill', false); show('pay-checkout', false); show('pay-result', true);
+  function showResult(kind, b, extra){
+    bill = b;
+    show('pay-loading', false); show('pay-bill', false); show('pay-checkout', false); show('pay-bank', false); show('pay-result', true);
+    renderGuard(b);
     var st = $('result-status'), h = $('result-h'), t = $('result-text');
+    if (kind === 'card' && b.status === '未払い' && !b.cancelled){
+      // カードを先に登録した人：続けて支払えるように、請求の画面にもどす
+      renderBill(b);
+      notice(String(extra || 'カード').replace(/（.*$/, '') + ' を保証用カードとして登録しました（今は請求されていません）。続けて、お支払いをお願いします。');
+      return;
+    }
+    if (kind === 'review'){
+      st.dataset.s = 'pending'; st.textContent = '確認中'; h.textContent = 'お支払いを受け付けました';
+      t.textContent = '金額の確認が必要なため、確認でき次第ご連絡します。もう一度お支払いいただく必要はありません。';
+      return;
+    }
+    if (kind === 'card'){
+      st.dataset.s = 'paid'; st.textContent = '登録済み'; h.textContent = '保証用カードを登録しました';
+      t.textContent = String(extra || 'カード').replace(/（.*$/, '') + ' を保証用カードとして登録しました。今は請求されていません。返却後の精算があるときだけ、内容をお知らせしたうえで請求します。';
+      return;
+    }
     if (kind === 'paid'){
       st.dataset.s = 'paid'; st.textContent = 'お支払い完了'; h.textContent = 'お支払いが完了しました';
       t.textContent = yen(b.amount) + '円' + (b.method ? '（' + b.method + '）' : '') + 'のお支払いを確認しました。確認のメールをお送りしています。' +
-        (b.kai === 1 ? 'これでご予約が確定しました。受け渡しの日時と場所は、あらためてご連絡します。' : '');
+        (b.kai === 1 ? 'これでご予約が確定しました。受け渡しの日時と場所は、あらためてご連絡します。' : '') +
+        (b.card && !b.extra ? '保証用カード（' + String(b.card).replace(/（.*$/, '') + '）が登録されています。' : '') +
+        (b.cardNeeded ? '最後に、下から保証用のカードを登録してください。' : '');
     } else {
-      st.dataset.s = 'pending'; st.textContent = 'お支払い待ち'; h.textContent = 'コンビニでのお支払いをお待ちしています';
-      t.textContent = 'お支払いの番号と期限は、先ほどの画面の案内と Stripe からのメールでご確認ください。お支払いが確認できたら、メールでお知らせします。';
+      st.dataset.s = 'pending'; st.textContent = '入金待ち'; h.textContent = 'お振込み・お支払いをお待ちしています';
+      t.textContent = '振込先（またはお支払い番号）と期限は、先ほどの画面の案内と Stripe から届くメールでご確認ください。入金が確認できたら、メールでお知らせします。' +
+        (b && b.cardNeeded ? '最後に、下から保証用のカードを登録してください。' : '');
     }
   }
 
@@ -106,6 +146,7 @@
   $('btn-bank').addEventListener('click', openBank);
   $('btn-back').addEventListener('click', back);
   $('btn-back2').addEventListener('click', back);
+  $('btn-guard').addEventListener('click', openGuard);
 
   var sid = q.get('session_id');
   if (!CFG.api){ error('設定を読み込めませんでした。お手数ですが、お問い合わせください。'); return; }
@@ -114,7 +155,8 @@
       ids = { r: d.r, n: String(d.n), k: d.k };
       try { history.replaceState(null, '', location.pathname + '?r=' + encodeURIComponent(d.r) + '&n=' + d.n + '&k=' + d.k); } catch (e) {}
       if (d.result === 'open'){ renderBill(d.bill); error('お支払いは完了していません。もう一度お試しいただくか、別の方法をお選びください。'); }
-      else showResult(d.result, d.bill);
+      else if (d.result === 'card_open'){ renderBill(d.bill); error('カードの登録は完了していません。もう一度お試しください。'); }
+      else showResult(d.result, d.bill, d.card);
     }).catch(function(e){ error(e.message); });
   } else if (ids.r && ids.n && ids.k){
     api({ api: 'bill', r: ids.r, n: ids.n, k: ids.k }).then(renderBill).catch(function(e){ error(e.message); });

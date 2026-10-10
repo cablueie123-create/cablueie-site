@@ -330,3 +330,9 @@ footer.site-foot{background:var(--sea-deep);margin-top:24px}
 .pay-status[data-s="unpaid"]{background:var(--sea-soft);color:var(--sea)}
 .linkish{background:none;border:0;padding:0;font:inherit;color:var(--sea);text-decoration:underline;cursor:pointer;justify-self:start}
 
+/* 保証用カード */
+.pay-card.guard{border:2px solid var(--sea)}
+.pay-card.guard h2{font-size:1.05rem;margin:0}
+.pay-card.guard p{margin:0}
+.pay-card.guard .btn{width:100%;padding:14px 18px;font-size:1rem}
+
