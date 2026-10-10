@@ -506,3 +506,14 @@ p,li,dd{text-wrap:pretty}
 .doc.guide{gap:14px}
 .doc.guide h2{margin-top:22px}
 .callout{background:var(--sea-soft);border-radius:12px;padding:12px 14px;font-weight:500}
+
+/* 貸し出す車：写真と車両の情報を並べ、その下に3つの特長を置く */
+.car{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:center}
+.car-photo{margin:0;position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);background:var(--sunk)}
+.car-photo img{display:block;width:100%;height:auto}
+.car-photo figcaption{position:absolute;left:10px;bottom:10px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.92);color:var(--ink);font-size:.78rem;font-weight:700;letter-spacing:.04em}
+.car .car-notes{grid-column:1/-1;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+@media (max-width:760px){
+  .car{grid-template-columns:minmax(0,1fr)}
+  .car .car-notes{grid-template-columns:minmax(0,1fr);gap:14px}
+}
