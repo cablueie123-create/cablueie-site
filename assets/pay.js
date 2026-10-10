@@ -56,25 +56,22 @@
     if (!b.stripe && !b.bank){ done.hidden = false; done.textContent = 'お支払いの方法を準備しています。お手数ですが、お問い合わせください。'; }
   }
 
-  /* 銀行振込・コンビニ払いの手続き中：振込先（お支払い番号）を見る・まだ払っていなければ別の方法に変える */
+  /* 銀行振込の手続き中：振込先を見る・まだ払っていなければ別の方法に変える */
   function renderWait(b, st, done){
-    var w = b.wait || {}, konbini = w.kind === 'konbini', bank = w.kind === 'bank';
+    var w = b.wait || {}, bank = w.kind === 'bank';
     st.dataset.s = 'pending'; st.textContent = '入金待ち';
     show('pay-actions', false);
     done.hidden = false;
     done.textContent = bank ? '銀行振込の入金をお待ちしています。振込先は、下の「振込先を見る」か、Stripe から届くメールでご確認ください。お客様専用の振込先なので、入金は自動で確認され、メールでお知らせします。' +
         (w.partial && w.remaining != null ? '一部の入金を確認しました。残りの ' + yen(w.remaining) + '円 をお振り込みください。' : '')
-      : (konbini ? 'コンビニでのお支払いをお待ちしています。お支払い番号は、下の「お支払い番号を見る」か、Stripe から届くメールでご確認ください。お支払いが確認できたら、メールでお知らせします。'
-        : '銀行振込・コンビニ払いの入金をお待ちしています。振込先やお支払い番号は、Stripe から届くメールでご確認ください。入金が確認できたら、メールでお知らせします。');
+      : '入金をお待ちしています。振込先は、Stripe から届くメールでご確認ください。入金が確認できたら、メールでお知らせします。';
     var link = $('wait-link');
     link.hidden = !w.url;
-    if (w.url){ link.href = w.url; link.textContent = konbini ? 'お支払い番号を見る' : '振込先を見る'; }
+    if (w.url){ link.href = w.url; link.textContent = '振込先を見る'; }
     var sw = $('btn-switch');
     sw.hidden = !w.canSwitch;
-    sw.textContent = konbini ? 'コンビニ払いをやめて別の方法で払う' : '振込をやめて別の方法で払う';
-    $('switch-text').textContent = konbini
-      ? 'まだコンビニで支払っていない場合だけ、進んでください。変更したあとは、前のお支払い番号では支払わないでください（もし両方で支払われた場合は、確認して返金します）。'
-      : 'まだ振り込んでいない場合だけ、進んでください。変更したあとは、前の振込先には振り込まないでください（もし両方で支払われた場合は、確認して返金します）。すでに振り込んだ場合は、変更せずに入金の確認をお待ちください。';
+    sw.textContent = '振込をやめて別の方法で払う';
+    $('switch-text').textContent = 'まだ振り込んでいない場合だけ、進んでください。変更したあとは、前の振込先には振り込まないでください（もし両方で支払われた場合は、確認して返金します）。すでに振り込んだ場合は、変更せずに入金の確認をお待ちください。';
     show('pay-wait', !!(w.url || w.canSwitch));
   }
   function askSwitch(){ show('switch-confirm', true); $('btn-switch').hidden = true; }
@@ -177,7 +174,7 @@
         (b.card && !b.extra ? '保証用カード（' + String(b.card).replace(/（.*$/, '') + '）が登録されています。' : '') +
         (b.cardNeeded ? '最後に、下から保証用のカードを登録してください。' : '');
     } else {
-      // 銀行振込・コンビニ払いの手続き中：請求の画面で、振込先と「別の方法で払う」を出す
+      // 銀行振込の手続き中：請求の画面で、振込先と「別の方法で払う」を出す
       renderBill(b);
       notice('お手続きを受け付けました。' + (b && b.cardNeeded ? '下から保証用のカードも登録してください。' : ''));
     }
