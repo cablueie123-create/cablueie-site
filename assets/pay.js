@@ -37,7 +37,7 @@
     renderGuard(b);
     $('bill-amount').textContent = yen(b.amount);
     $('bill-name').textContent = (b.name || '') + ' 様';
-    $('bill-id').textContent = b.id + (b.extra ? '（返却後の精算）' : (b.kai > 1 ? '（' + b.kai + '回目）' : ''));
+    $('bill-id').textContent = b.id + (b.extra ? (/延長/.test(b.label) ? '（延長分）' : (/受け渡し料/.test(b.label) ? '（受け渡し料）' : '（返却後の精算）')) : (b.kai > 1 ? '（' + b.kai + '回目）' : ''));
     $('bill-label').textContent = b.label;
     $('bill-due').textContent = b.due ? jp(b.due) : '—';
     var st = $('bill-status'), done = $('bill-done');
@@ -171,6 +171,7 @@
       st.dataset.s = 'paid'; st.textContent = 'お支払い完了'; h.textContent = 'お支払いが完了しました';
       t.textContent = yen(b.amount) + '円' + (b.method ? '（' + b.method + '）' : '') + 'のお支払いを確認しました。確認のメールをお送りしています。' +
         (b.kai === 1 ? 'これでご予約が確定しました。受け渡しの日時と場所は、あらためてご連絡します。' : '') +
+        (b.extra && /延長/.test(b.label) ? 'これで延長が確定しました。新しい返す日は、確認のメールでお知らせします。' : '') +
         (b.card && !b.extra ? '保証用カード（' + String(b.card).replace(/（.*$/, '') + '）が登録されています。' : '') +
         (b.cardNeeded ? '最後に、下から保証用のカードを登録してください。' : '');
     } else {
