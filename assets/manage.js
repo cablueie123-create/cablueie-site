@@ -32,8 +32,9 @@
     busy = true;
     var old = btn.textContent;
     btn.disabled = true; btn.textContent = label;
-    fn().then(function(){ busy = false; btn.disabled = false; btn.textContent = old; },
-              function(){ busy = false; btn.disabled = false; btn.textContent = old; });
+    /* 途中で画面を描き直してボタンの文字が変わっていたら、そのままにする */
+    function end(){ busy = false; btn.disabled = false; if (btn.textContent === label) btn.textContent = old; }
+    fn().then(end, end);
   }
 
   var STATUS = {
@@ -75,6 +76,15 @@
     var note = $('m-note');
     note.textContent = notes.join(' '); note.hidden = !notes.length;
 
+    /* 返金先の口座（銀行振込でお返しする分があるとき） */
+    show('m-bank', !!v.bank);
+    if (v.bank){
+      sectionError('b', '');
+      text('b-lead', (v.bank.planned ? '途中解約の返金のうち、' + yen(v.bank.amount) + ' は銀行振込でお返しする予定です。' : '返金のうち、' + yen(v.bank.amount) + ' は銀行振込でお返しします。') +
+        (v.bank.have ? '返金先の口座は、受け付け済みです。変更するときだけ、もう一度送ってください。' : '返金先の口座をお知らせください。'));
+      text('b-submit', v.bank.have ? '口座を送り直す' : '口座を送る');
+    }
+
     /* 延長 */
     show('m-extend', !!v.extend);
     if (v.extend){
@@ -111,11 +121,12 @@
     d.textContent = msg; d.hidden = false;
     d.scrollIntoView({ behavior: 'smooth', block: 'start' }); d.focus({ preventScroll: true });
   }
+  function askBank(v){ return v.bank && !v.bank.have ? '続けて、下の「返金先の口座」をお知らせください。' : ''; }
   function refundNote(qt, planned){
     var t = [];
     if (qt.deduct) t.push('決済手数料は、決済会社から当方に戻らないため、返金額に対応する分を差し引きます。');
     if (qt.refund) t.push('返金は、お支払いに使った方法に戻します。カードの場合、明細に反映されるまで数日から数週間かかることがあります。');
-    if (qt.manual) t.push((qt.refund ? 'このうち ' + yen(qt.manual) + ' は' : '返金は') + '、銀行振込でお返しします。振込先をうかがうため、あらためてご連絡します。');
+    if (qt.manual) t.push((qt.refund ? 'このうち ' + yen(qt.manual) + ' は' : '返金は') + '、銀行振込でお返しします。手続きのあと、このページで返金先の口座をお知らせください。');
     if (planned) t.push('返金は、車の返却を確認したあとに行います。');
     return t.join('');
   }
@@ -172,7 +183,7 @@
     sectionError('c', '');
     working($('c-submit'), '送信しています…', function(){
       return post({ act: 'cancel', shown: quote.c.total, agree: true }).then(function(res){
-        render(res.view); done('ご予約をキャンセルしました。確認のメールをお送りしました。');
+        render(res.view); done('ご予約をキャンセルしました。確認のメールをお送りしました。' + askBank(res.view));
       }, function(err){ sectionError('c', clean(err)); });
     });
   }
@@ -201,11 +212,32 @@
     sectionError('e', '');
     working($('e-submit'), '送信しています…', function(){
       return post({ act: 'end', at: quote.e.date, shown: quote.e.total, agree: true }).then(function(res){
-        render(res.view); done('途中解約を受け付けました。解約日（車を返す日）は ' + jp(res.view.end) + ' です。確認のメールをお送りしました。');
+        render(res.view); done('途中解約を受け付けました。解約日（車を返す日）は ' + jp(res.view.end) + ' です。確認のメールをお送りしました。' + askBank(res.view));
       }, function(err){ sectionError('e', clean(err)); });
     });
   }
 
+  /* ---------- 返金先の口座 ---------- */
+  function submitBank(ev){
+    ev.preventDefault();
+    var d = { act: 'bank', bank: $('b-bank').value.trim(), branch: $('b-branch').value.trim(), kind: $('b-kind-t').checked ? '当座' : '普通',
+      number: $('b-number').value.trim(), holder: $('b-holder').value.trim() };
+    var miss = [];
+    if (!d.bank) miss.push('銀行名');
+    if (!d.branch) miss.push('支店名');
+    if (!d.number) miss.push('口座番号');
+    if (!d.holder) miss.push('口座名義');
+    if (miss.length) return sectionError('b', '次の項目を入力してください：' + miss.join('、'));
+    sectionError('b', '');
+    working($('b-submit'), '送信しています…', function(){
+      return post(d).then(function(res){
+        ['b-bank', 'b-branch', 'b-number', 'b-holder'].forEach(function(id){ $(id).value = ''; });
+        render(res.view); done('返金先の口座を受け付けました。確認のメールをお送りしました。');
+      }, function(err){ sectionError('b', clean(err)); });
+    });
+  }
+
+  $('b-form').addEventListener('submit', submitBank);
   $('x-quote').addEventListener('click', quoteExtend);
   $('x-form').addEventListener('submit', submitExtend);
   $('x-to').addEventListener('change', function(){ show('x-result', false); quote.x = null; });
