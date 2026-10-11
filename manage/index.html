@@ -45,6 +45,24 @@
     <a class="btn big" id="m-pay" href="#" hidden>お支払いページへ</a>
   </section>
 
+  <section class="pay-card" id="m-bank" hidden aria-labelledby="b-h">
+    <h2 id="b-h" style="font-size:1.1rem;margin:0">返金先の口座</h2>
+    <p class="small muted" id="b-lead" style="margin:0"></p>
+    <form id="b-form" class="doc-form" novalidate>
+      <div class="field"><label for="b-bank">銀行名</label><input type="text" id="b-bank" maxlength="40" autocomplete="off" placeholder="例：〇〇銀行" required></div>
+      <div class="field"><label for="b-branch">支店名</label><input type="text" id="b-branch" maxlength="40" autocomplete="off" placeholder="例：〇〇支店" required></div>
+      <fieldset class="field">
+        <legend>口座の種類</legend>
+        <div class="radios"><label><input type="radio" name="b-kind" id="b-kind-f" value="普通" checked>普通</label><label><input type="radio" name="b-kind" id="b-kind-t" value="当座">当座</label></div>
+      </fieldset>
+      <div class="field"><label for="b-number">口座番号</label><input type="text" id="b-number" inputmode="numeric" maxlength="8" autocomplete="off" required></div>
+      <div class="field"><label for="b-holder">口座名義（カタカナ）</label><input type="text" id="b-holder" maxlength="60" autocomplete="off" placeholder="例：ヤマダ タロウ" required></div>
+      <div class="form-error" id="b-error" role="alert" hidden></div>
+      <button type="submit" class="btn big" id="b-submit">口座を送る</button>
+      <p class="small muted" style="margin:0">お知らせいただいた口座は、返金のためだけに使います（<a href="../#privacy">個人情報の取り扱い</a>）。</p>
+    </form>
+  </section>
+
   <section class="pay-card" id="m-extend" hidden aria-labelledby="x-h">
     <h2 id="x-h" style="font-size:1.1rem;margin:0">延長する</h2>
     <div class="notice warn" id="x-off" hidden></div>
