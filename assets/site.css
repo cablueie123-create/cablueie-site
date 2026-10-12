@@ -421,6 +421,17 @@ p,li,dd{text-wrap:pretty}
 .rates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 24px;align-items:start}
 .rate{display:grid;gap:12px;min-width:0}
 @media (max-width:760px){ .rates{grid-template-columns:minmax(0,1fr)} }
+/* PCでは、月のバーを2つの欄の下いっぱいに伸ばす（シーズンは月額にも1日料金にも共通） */
+@media (min-width:761px){
+  .rates{row-gap:12px}
+  .rates > .rate{display:contents}
+  .rates > .rate > *{grid-column:1;min-width:0}
+  .rates > .rate + .rate > *{grid-column:2}
+  .rates > .rate > .fee-cap{grid-row:1}
+  .rates > .rate > .seasons{grid-row:2}
+  .rates > .rate > .months{grid-row:3;grid-column:1/-1}
+  .rates > .rate > p{grid-row:4}
+}
 .season{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 8px;display:grid;gap:2px;justify-items:center;text-align:center;min-width:0}
 .season::before{content:"";width:28px;height:6px;border-radius:3px;background:var(--s-color);margin-bottom:4px}
 .season[data-season="winter"]{--s-color:#8CCFE6}
