@@ -378,6 +378,13 @@ p,li,dd{text-wrap:pretty}
 
 /* 折りたたみ */
 .folds{display:grid;gap:8px}
+/* PC では、折りたたみの行とよくある質問を2列に（行の右側が空かないように） */
+@media (min-width:900px){
+  .folds.cols,.faq.cols{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px;align-items:start}
+  .folds.cols > .fold:last-child:nth-child(odd),.faq.cols > .faq-item:last-child:nth-child(odd){grid-column:1/-1}
+  /* 数が奇数のとき、最後の1つは横いっぱいにして、見出しと説明を1行に並べる */
+  .folds.cols > .fold:last-child:nth-child(odd) > summary{grid-template-columns:auto minmax(0,1fr);align-items:baseline;column-gap:18px}
+}
 .fold{background:var(--surface);border:1px solid var(--line);border-radius:12px}
 .fold > summary{cursor:pointer;list-style:none;padding:13px 46px 13px 16px;position:relative;display:grid;gap:1px}
 .fold > summary::-webkit-details-marker{display:none}
@@ -394,6 +401,26 @@ p,li,dd{text-wrap:pretty}
 /* 季節ごとの料金：3つの数字と、月の帯 */
 .seasons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .seasons.two,.season-mini.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* 上の料金カード：2つのシーズンを大きく並べる */
+.price-duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pd{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 12px 11px;display:grid;gap:5px;align-content:start;min-width:0}
+.pd::before{content:"";width:28px;height:6px;border-radius:3px;background:var(--s-color)}
+.pd[data-season="normal"]{--s-color:#2C9CC4}
+.pd[data-season="summer"]{--s-color:#0B5F80}
+.pd-name{font-weight:700;font-size:.92rem;line-height:1.35;display:grid}
+.pd-name small{font-weight:400;font-size:.76rem;color:var(--muted)}
+.price-card{container-type:inline-size}
+/* 数字の大きさは、カードの幅に合わせる（箱からはみ出さないように）。1行目は、幅の単位 cqi が使えないブラウザ用 */
+.pd strong{font-family:var(--font-display);font-weight:800;font-size:clamp(1.1rem,5.4vw,1.9rem);font-size:clamp(1rem,calc(9.5cqi - 5.4px),1.9rem);line-height:1.1;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pd strong small{font-family:var(--font-body);font-size:.42em;font-weight:500;letter-spacing:0;margin-left:3px}
+.pd.now{border-color:var(--sea);box-shadow:0 0 0 2px var(--sea-soft)}
+.pd.now::after{content:"いま";position:absolute;top:-9px;right:8px;font-size:.68rem;font-weight:700;background:var(--sea);color:var(--sea-ink);border-radius:999px;padding:1px 8px}
+.price-card .cta .btn{flex:1 1 auto;text-align:center}
+@media (min-width:761px){ .price-card .chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))} }
+/* 料金：月額と1日料金を横に並べる（スマホでは縦に） */
+.rates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 24px;align-items:start}
+.rate{display:grid;gap:12px;min-width:0}
+@media (max-width:760px){ .rates{grid-template-columns:minmax(0,1fr)} }
 .season{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 8px;display:grid;gap:2px;justify-items:center;text-align:center;min-width:0}
 .season::before{content:"";width:28px;height:6px;border-radius:3px;background:var(--s-color);margin-bottom:4px}
 .season[data-season="winter"]{--s-color:#8CCFE6}
@@ -424,6 +451,12 @@ p,li,dd{text-wrap:pretty}
 .tile-v{font-family:var(--font-display);font-weight:800;font-size:1.25rem;line-height:1.3;font-variant-numeric:tabular-nums}
 .tile-v small{font-family:var(--font-body);font-size:.62em;font-weight:500}
 .tile-n{font-size:.78rem;color:var(--muted)}
+/* PC では、タイルの中を「項目 ― 値」の1行にして、右側が空かないようにする */
+@media (min-width:900px){
+  .tiles .tile{grid-template-columns:minmax(0,1fr) auto;align-items:baseline;column-gap:12px;padding:12px 14px}
+  .tiles .tile-v{text-align:right}
+  .tiles .tile-n{grid-column:1/-1}
+}
 @media (max-width:560px){
   .tiles.stack{grid-template-columns:minmax(0,1fr)}
   .tiles.stack .tile{grid-template-columns:minmax(0,1fr) auto;align-items:baseline;column-gap:10px}
