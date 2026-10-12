@@ -144,13 +144,18 @@
       </div>
     </div>
 
-    <h3 class="fee-cap">日数で決まる料金</h3>
+    <h3 class="fee-cap">1日料金（季節で変わります）</h3>
+    <div class="seasons">
+      <div class="season" data-season="winter"><span class="s-name">冬</span><span class="s-months">12〜2月</span><strong><span data-price="dailyWinter">3,600</span><small>円</small></strong></div>
+      <div class="season" data-season="normal"><span class="s-name">通常</span><span class="s-months">3〜6月・10〜11月</span><strong><span data-price="daily">3,980</span><small>円</small></strong></div>
+      <div class="season" data-season="summer"><span class="s-name">夏</span><span class="s-months">7〜9月</span><strong><span data-price="dailySummer">4,400</span><small>円</small></strong></div>
+    </div>
+    <p class="small muted">1ヶ月を超えた分と、短期（7日〜1ヶ月未満）にかかる、1日あたりの料金です。合計は、その時期の1ヶ月分の料金が上限です。</p>
     <div class="tiles stack">
-      <div class="tile"><span class="tile-k">1ヶ月を超えた分</span><span class="tile-v">1日 <span data-price="dailyWinter">3,600</span>〜<span data-price="dailySummer">4,400</span><small>円</small></span><span class="tile-n">その時期の1ヶ月分の料金が上限</span></div>
-      <div class="tile"><span class="tile-k">短期（7日〜1ヶ月未満）</span><span class="tile-v">1日 <span data-price="dailyWinter">3,600</span>〜<span data-price="dailySummer">4,400</span><small>円</small></span><span class="tile-n">空いているときだけ。上限は同じ</span></div>
+      <div class="tile"><span class="tile-k">1ヶ月を超えた分</span><span class="tile-v">1日単位</span><span class="tile-n">1日料金 × 超えた日数</span></div>
+      <div class="tile"><span class="tile-k">短期（7日〜1ヶ月未満）</span><span class="tile-v">7日から</span><span class="tile-n">1日料金 × 日数。空いているときだけ</span></div>
       <div class="tile"><span class="tile-k">NOCサポート（任意）</span><span class="tile-v">月 <span data-price="nocMonth">1,500</span><small>円</small></span><span class="tile-n">事故のときのNOCが0円に</span></div>
     </div>
-    <p class="season-note">1日の料金は季節で変わります。冬（12〜2月）<b><span data-price="dailyWinter">3,600</span>円</b>、通常（3〜6月・10〜11月）<b><span data-price="daily">3,980</span>円</b>、夏（7〜9月）<b><span data-price="dailySummer">4,400</span>円</b>です。</p>
 
     <h3 class="fee-cap">受け渡し料（片道）</h3>
     <div class="tiles stack">
