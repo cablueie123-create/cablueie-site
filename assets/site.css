@@ -98,6 +98,7 @@ section{display:grid;gap:20px;min-width:0}
 .fee-table{width:100%;border-collapse:collapse;font-size:.94rem}
 .fee-table th,.fee-table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 .fee-table th{font-weight:500}
+.fee-table th.amt{text-align:right}
 .fee-table td.amt{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:700}
 .fee-table tr:last-child th,.fee-table tr:last-child td{border-bottom:none}
 .table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
