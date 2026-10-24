@@ -574,3 +574,31 @@ p,li,dd{text-wrap:pretty}
   .car{grid-template-columns:minmax(0,1fr)}
   .car .car-notes{grid-template-columns:minmax(0,1fr);gap:14px}
 }
+
+/* よくある質問：早く返したときの返金（帯グラフ） */
+.refund-q .rf-legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.8rem;color:var(--muted)}
+.refund-q .rf-legend span{display:inline-flex;align-items:center;gap:6px}
+.refund-q .rf-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.refund-q .cost-bar span.rf-used,.refund-q .rf-legend i.rf-used{background:#2A93BD}
+.refund-q .cost-bar span.rf-fee,.refund-q .rf-legend i.rf-fee{background:#C9567A}
+.refund-q .cost-bar span.rf-back,.refund-q .rf-legend i.rf-back{background:#E3A22A}
+.refund-q .cost-bar span.rf-pad{background:none}
+.refund-q .cost-legend{font-size:.72rem}
+.refund-q .cost-legend span{overflow-wrap:anywhere}
+.refund-q .cost p.rf-note{padding:0;font-size:.84rem;color:var(--muted);line-height:1.6}
+.refund-q p.rf-foot{padding-top:8px;font-size:.84rem;color:var(--muted)}
+.rf-calc{display:grid;gap:14px;padding:0 16px 4px}
+@media (min-width:761px){ .rf-calc{grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);align-items:start} }
+.rf-inputs{display:grid;gap:12px;align-content:start}
+.rf-field{border:0;margin:0;padding:0;display:grid;gap:6px;min-width:0}
+.rf-field legend{font-size:.88rem;font-weight:700;padding:0;margin-bottom:6px}
+.rf-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.rf-presets{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.84rem;color:var(--muted)}
+.rf-preset{font:inherit;font-size:.82rem;color:var(--sea);background:var(--sea-soft);border:0;border-radius:999px;padding:5px 12px;cursor:pointer}
+.rf-preset:hover{background:#c3e6f2}
+.rf-result figcaption{font-weight:700}
+.rf-rows{margin:0;display:grid;gap:6px;font-size:.88rem}
+.rf-rows div{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-bottom:1px dashed var(--line);padding-bottom:5px}
+.rf-rows dt{color:var(--muted);min-width:0}
+.rf-rows dt small{display:block;font-size:.76rem}
+.rf-rows dd{margin:0;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
