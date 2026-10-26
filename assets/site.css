@@ -20,7 +20,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-wei
 .wrap{width:100%;max-width:1012px;margin-inline:auto;padding-inline:16px;box-sizing:border-box}
 #page{padding-block:44px 72px;display:grid;gap:64px}
 h1,h2,h3{line-height:1.35;text-wrap:balance;margin:0}
-h1,h2{font-family:var(--font-head);font-weight:800;letter-spacing:.02em;font-synthesis:none}
+h1,h2{font-family:var(--font-head);font-weight:700;letter-spacing:.02em;font-synthesis:none}
 h1 b,h2 b,h1 strong,h2 strong{font-weight:inherit}
 h2{font-size:1.45rem}
 h3{font-size:1.02rem;font-weight:700}
@@ -62,7 +62,7 @@ section{display:grid;gap:20px;min-width:0}
 .brand-name-img{display:block;width:min(430px,34vw);height:auto}
 .brand-en-img{display:block;width:calc(min(430px,34vw) * .334);height:auto;margin-left:.6%}
 @media (max-width:760px){ .brand-mark{width:62px} .brand-name-img{width:min(430px,calc(100vw - 110px))} .brand-en-img{width:calc(min(430px,calc(100vw - 110px)) * .334)} }
-.hero h1{font-size:clamp(1.4rem,3.3vw,1.9rem);font-weight:800;margin-top:18px;color:var(--hero-ink)}
+.hero h1{font-size:clamp(1.4rem,3.3vw,1.9rem);font-weight:700;margin-top:18px;color:var(--hero-ink)}
 .hero .lead{margin-top:10px;color:var(--hero-sub);max-width:34em}
 .pill{display:inline-flex;align-items:center;gap:8px;padding:4px 12px;border-radius:999px;font-size:.84rem;font-weight:500;background:var(--sunk);color:var(--ink)}
 .pill::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--muted)}
