@@ -8,7 +8,9 @@
   --sea-deep:#0B7FA8; --sea-mid:#18A7CB; --sea-shallow:#45CCD4; --sand:#F5E8CE;
   --hero-ink:#0E3442; --hero-sub:#24495A; --bark:#6E4526;
   --shadow:0 14px 34px -16px rgba(8,92,124,.35);
-  --font-head:"Kiwi Maru","Zen Maru Gothic","Hiragino Maru Gothic ProN",serif;
+  --font-head:"M PLUS Rounded 1c","Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif;
+  --font-en:"Montserrat","Helvetica Neue",Arial,sans-serif;
+  --navy:#14295E; --bark-1:#7A3A12; --bark-2:#C0661E;
   --font-display:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans",system-ui,sans-serif;
   --font-body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
   --wave:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 12'%3E%3Cpath d='M0 6 Q10 0 20 6 T40 6' fill='none' stroke='%230A7BA3' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -18,7 +20,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-wei
 .wrap{width:100%;max-width:1012px;margin-inline:auto;padding-inline:16px;box-sizing:border-box}
 #page{padding-block:44px 72px;display:grid;gap:64px}
 h1,h2,h3{line-height:1.35;text-wrap:balance;margin:0}
-h1,h2{font-family:var(--font-head);font-weight:500;letter-spacing:.02em;font-synthesis:none}
+h1,h2{font-family:var(--font-head);font-weight:800;letter-spacing:.02em;font-synthesis:none}
 h1 b,h2 b,h1 strong,h2 strong{font-weight:inherit}
 h2{font-size:1.45rem}
 h3{font-size:1.02rem;font-weight:700}
@@ -54,12 +56,13 @@ section{display:grid;gap:20px;min-width:0}
 @keyframes drive{from{transform:translateX(-90px)}to{transform:translateX(calc(100vw + 20px))}}
 @keyframes bob{from{transform:translateY(0)}to{transform:translateY(-1.5px)}}
 .shore{height:28px;background:linear-gradient(var(--sand),var(--bg))}
-.brand{display:inline-grid;justify-items:start;gap:4px}
-.brand-en{font-family:var(--font-body);font-weight:700;font-size:clamp(.74rem,1.4vw,.9rem);letter-spacing:.5em;line-height:1;color:var(--sea);padding-left:.1em}
-.brand-row{display:flex;align-items:baseline;gap:.35em}
-.wordmark{font-family:var(--font-head);font-weight:500;font-size:clamp(2.6rem,7vw,4.1rem);letter-spacing:.06em;line-height:1.05;color:var(--hero-ink);padding-bottom:.2em;background:var(--wave) left bottom/.62em .19em repeat-x}
-.brand-kind{font-family:var(--font-head);font-weight:500;font-size:clamp(1.15rem,2.7vw,1.65rem);letter-spacing:.08em;line-height:1;color:var(--hero-ink);white-space:nowrap}
-.hero h1{font-size:clamp(1.4rem,3.3vw,1.9rem);font-weight:500;margin-top:18px;color:var(--hero-ink)}
+.brand{display:flex;align-items:center;gap:clamp(10px,1.6vw,16px)}
+.brand-mark{display:block;width:clamp(62px,8.6vw,110px);height:auto;flex:none}
+.brand-text{display:grid;gap:2px;min-width:0}
+.brand-name-img{display:block;width:min(430px,34vw);height:auto}
+.brand-en-img{display:block;width:calc(min(430px,34vw) * .334);height:auto;margin-left:.6%}
+@media (max-width:760px){ .brand-mark{width:62px} .brand-name-img{width:min(430px,calc(100vw - 110px))} .brand-en-img{width:calc(min(430px,calc(100vw - 110px)) * .334)} }
+.hero h1{font-size:clamp(1.4rem,3.3vw,1.9rem);font-weight:800;margin-top:18px;color:var(--hero-ink)}
 .hero .lead{margin-top:10px;color:var(--hero-sub);max-width:34em}
 .pill{display:inline-flex;align-items:center;gap:8px;padding:4px 12px;border-radius:999px;font-size:.84rem;font-weight:500;background:var(--sunk);color:var(--ink)}
 .pill::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--muted)}
@@ -214,8 +217,8 @@ fieldset{border:none;margin:0;padding:0;display:grid;gap:6px;min-width:0}
 .foot-scene{position:relative;background:linear-gradient(transparent 0 70px,var(--sea-deep) 70px);padding-top:70px;margin-top:8px}
 .sea-foot{position:absolute;left:0;top:0;width:100%;height:72px;display:block}
 footer{display:grid;gap:6px;justify-items:start;font-size:.86rem;color:rgba(255,255,255,.9);padding-block:18px 36px}
-.foot-emblem{width:64px;height:64px;margin-bottom:4px}
-footer strong{color:#fff;font-family:var(--font-head);font-size:1.35rem;font-weight:500;letter-spacing:.06em}
+.foot-emblem{width:64px;height:auto;margin-bottom:4px;filter:drop-shadow(0 0 1px rgba(255,255,255,.9)) drop-shadow(0 0 6px rgba(255,255,255,.5))}
+footer strong{color:#fff;font-family:var(--font-head);font-size:1.35rem;font-weight:900;letter-spacing:.02em}
 
 @media (max-width:760px){
   .scene .hero,.car,.req,.price-grid{grid-template-columns:minmax(0,1fr)}
@@ -285,7 +288,7 @@ img{max-width:100%}
 .privacy ul{margin:0;padding-left:1.2em;display:grid;gap:4px}
 @media (max-width:420px){ .uploads{grid-template-columns:minmax(0,1fr)} .done dl{grid-template-columns:minmax(0,1fr)} }
 /* ---- public site additions (GitHub Pages) ---- */
-.h1-sub{display:block;font-family:var(--font-body);font-size:.62em;font-weight:700;letter-spacing:.06em;color:var(--sea);margin-bottom:6px}
+.h1-sub{display:block;font-family:var(--font-head);font-size:.62em;font-weight:800;letter-spacing:.04em;color:var(--navy);margin-bottom:6px}
 
 /* FAQ */
 .faq{display:grid;gap:8px}
@@ -314,9 +317,9 @@ body.subpage{background:var(--bg)}
 .topbar-in{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px}
 .tb-brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none}
 .tb-link{font-weight:700;color:var(--sea);text-decoration:none;font-size:.92rem;background:rgba(255,255,255,.85);padding:6px 12px;border-radius:999px;white-space:nowrap}
-.tb-emblem{display:block;width:52px;height:52px;filter:drop-shadow(0 2px 5px rgba(8,92,124,.25))}
-.tb-name{font-family:var(--font-head);font-weight:500;font-size:1.12rem;letter-spacing:.06em;color:var(--bark);white-space:nowrap}
-@media (max-width:480px){ .tb-brand{gap:8px} .tb-name{font-size:.9rem;letter-spacing:0} .tb-emblem{width:46px;height:46px} .tb-link{font-size:.84rem;padding:6px 10px} }
+.tb-emblem{display:block;width:56px;height:auto}
+.tb-name-img{display:block;width:180px;height:auto}
+@media (max-width:480px){ .tb-brand{gap:6px} .tb-name-img{width:126px} .tb-emblem{width:40px} .tb-link{font-size:.84rem;padding:6px 10px} }
 .doc{padding-block:28px 48px;display:grid;gap:16px;max-width:820px}
 .doc h1{font-size:1.6rem}
 .doc .yk-body{max-height:none;overflow:visible;padding:18px 20px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
