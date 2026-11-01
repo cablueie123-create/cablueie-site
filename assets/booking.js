@@ -17,6 +17,7 @@
     handover: B.handover || '奄美市名瀬有屋町',
     bookings: Array.isArray(B.blocks) ? B.blocks : [],
     today: B.today || null,
+    openFrom: '',
     loaded: false
   };
   function applyBoot(D){
@@ -30,8 +31,11 @@
     state.handover = D.handover || state.handover;
     state.bookings = Array.isArray(D.blocks) ? D.blocks : [];
     state.today = D.today || state.today;
+    state.openFrom = /^\d{4}-\d{2}-\d{2}$/.test(D.openFrom || '') ? D.openFrom : '';
     state.loaded = true;
-    if (!touched){ $('req-start').value = ''; $('req-end').value = ''; defaultRange(); pick.view = firstOf(parse(startVal() || todayStr())); }
+    if (!touched){ $('req-start').value = ''; $('req-end').value = ''; defaultRange(); pick.view = firstOf(parse(startVal() || firstDay())); }
+    if (startVal() && startVal() < firstDay()) pick.view = firstOf(parse(firstDay()));
+    if (!touched) calMsg(guide());
     renderAll();
     renderPause();
     if (state.loaded && periodProblem(period())) showCal(true);
@@ -50,6 +54,8 @@
   function ymd(d){ return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate()); }
   function parse(s){ var p = s.split('-').map(Number); return new Date(Date.UTC(p[0], p[1]-1, p[2])); }
   function todayStr(){ if (state.today) return state.today; var n = new Date(); return n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate()); }
+  /* 選べる最初の日。「貸し出しを始める日」が先なら、その日 */
+  function firstDay(){ var t=todayStr(); return state.openFrom > t ? state.openFrom : t; }
   function addDays(d,n){ return new Date(d.getTime()+n*DAY); }
   function periodEnd(start,months){
     /* 民法の期間計算：応当日の前日。応当日がない月は、その月の末日 */
@@ -92,7 +98,7 @@
     return '';
   }
   function nextFree(){
-    var t = parse(todayStr());
+    var t = parse(firstDay());
     for (var i=0;i<400;i++){ var d=addDays(t,i); if(!kindAt(ymd(d))) return d; }
     return null;
   }
@@ -211,7 +217,7 @@
   }
   function renderYear(){
     var wrap=$('year'); if (!wrap) return; wrap.textContent='';
-    var today=todayStr(); var t=parse(today);
+    var today=todayStr(), openDay=firstDay(); var t=parse(today);
     var y=t.getUTCFullYear(), m=t.getUTCMonth();
     var frag=document.createDocumentFragment();
     for (var i=0;i<12;i++){
@@ -226,7 +232,7 @@
         var s=first.getUTCFullYear()+'-'+pad(first.getUTCMonth()+1)+'-'+pad(d);
         var c=document.createElement('span'); c.className='d';
         var k=kindAt(s); if(k){ c.classList.add(k); bookedN++; }
-        if (s<today) c.classList.add('past');
+        if (s<openDay) c.classList.add('past');
         if (s===today) c.classList.add('today');
         if (sel.start && s>=sel.start && s<=sel.end) c.classList.add('pick');
         days.appendChild(c);
@@ -247,6 +253,7 @@
         head.textContent='最短 '+jpw(nf)+' から '+run+'日間 空いています'+(run>=state.short.min && shortOpen(nf) ? '（短期で借りられます）' : '')+'。';
       }
     }
+    if (state.loaded && nf && openDay > today) head.textContent += '（開業の予定日です。前後することがあります）';
     $('avail-updated').textContent = state.updatedAt ? ('（'+jp(parse(state.updatedAt))+' 時点）') : '';
 
     var list=$('booked-list'); list.textContent='';
@@ -322,6 +329,7 @@
   function periodProblem(r){
     if (!r) return startVal() ? '返す日を選んでください。' : '借りる日を選んでください。';
     if (r.start < todayStr()) return '借りる日は今日以降の日付を選んでください。';
+    if (r.start < firstDay()) return '貸し出しは'+jp(parse(firstDay()))+'からの予定です。借りる日は、その日以降を選んでください。';
     if (r.end < r.start) return '返す日は、借りる日より後の日付を選んでください。';
     if (r.short){ var sp=shortProblem(r.s, r.e); if (sp) return sp; }
     if (r.tooLong) return 'ご利用期間は最長6ヶ月です。返す日は'+jp(maxEnd(r.s))+'までを選んでください。';
@@ -414,7 +422,7 @@
   function calMsg(t, warn){ var el=$('cal-msg'); el.textContent=t||''; el.classList.toggle('warn', !!warn); }
   function guide(){
     var sv=startVal();
-    if (pick.mode==='start' || !sv) return '借りる日をタップしてください。';
+    if (pick.mode==='start' || !sv) return firstDay() > todayStr() ? '借りる日をタップしてください（'+jpw(parse(firstDay()))+'から選べます）。' : '借りる日をタップしてください。';
     var s=parse(sv);
     if (shortOpen(s)) return '返す日をタップしてください（'+jpw(shortMinEnd(s))+' 〜 '+jpw(maxEnd(s))+'。1ヶ月未満は短期の料金です）。';
     return '返す日をタップしてください（'+jpw(minEnd(s))+' 〜 '+jpw(maxEnd(s))+'）。';
@@ -439,7 +447,7 @@
   }
   function tapDay(ds){
     touched = true;
-    if (ds < todayStr()) return;
+    if (ds < firstDay()) return;
     var sv=startVal(), ev=endVal(), k=kindAt(ds);
     if (pick.mode==='start' || !sv || ds < sv){
       if (k){ calMsg(jpw(parse(ds))+'は予約が入っているため、借りる日にできません。', true); return; }
@@ -459,8 +467,8 @@
     periodChanged(); calMsg(planOf(s2,e).short ? '短期（'+spanDays(s2,e)+'日間）で選びました。返す日を変えるときは、別の日をタップしてください。' : '期間を選びました。返す日を変えるときは、別の日をタップしてください。');
   }
   function renderCal(){
-    if (!pick.view) pick.view = firstOf(parse(startVal() || todayStr()));
-    var v=pick.view, today=todayStr(), t0=firstOf(parse(today));
+    if (!pick.view) pick.view = firstOf(parse(startVal() || firstDay()));
+    var v=pick.view, today=todayStr(), first=firstDay(), t0=firstOf(parse(first));
     $('cal-title').textContent = v.getUTCFullYear()+'年'+(v.getUTCMonth()+1)+'月';
     $('cal-prev').disabled = v.getTime() <= t0.getTime();
     $('cal-next').disabled = v.getTime() >= addMonths(t0, 13).getTime();
@@ -474,7 +482,7 @@
       var ds=v.getUTCFullYear()+'-'+pad(v.getUTCMonth()+1)+'-'+pad(d);
       var b=document.createElement('button'); b.type='button'; b.className='cd'; b.textContent=d; b.dataset.date=ds;
       var note=[];
-      if (ds < today){ b.disabled=true; }
+      if (ds < first){ b.disabled=true; }
       if (ds === today){ b.classList.add('today'); note.push('今日'); }
       var k=kindAt(ds); if (k){ b.classList.add(k); note.push(k==='booked'?'予約済み':'仮押さえ'); }
       if (sv && ev && ds>sv && ds<ev) b.classList.add('in');
@@ -503,7 +511,7 @@
   function initPicker(){
     var fromUrl=readQuery();
     defaultRange();
-    pick.view = firstOf(parse(startVal() || todayStr()));
+    pick.view = firstOf(parse(startVal() || firstDay()));
     setMode('start');
     showCal(!fromUrl);
     if ($('cal-toggle')) $('cal-toggle').addEventListener('click', function(){ showCal($('cal-wrap').hidden); });
@@ -511,7 +519,7 @@
       touched = true;
       showCal(true);
       setMode('start'); pick.keepEnd=true;
-      if (startVal()) pick.view=firstOf(parse(startVal()));
+      if (startVal()) pick.view=firstOf(parse(startVal() < firstDay() ? firstDay() : startVal()));
       renderCal(); calMsg(guide());
     });
     $('rs-end').addEventListener('click', function(){
