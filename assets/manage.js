@@ -5,7 +5,7 @@
   var $ = function(id){ return document.getElementById(id); };
   var q = new URLSearchParams(location.search);
   var ids = { r: q.get('r') || '', k: q.get('k') || '' };
-  var view = null, busy = false, quote = { x: null, c: null, e: null };
+  var view = null, busy = false, quote = { x: null, c: null, e: null, d: null };
   var FAIL = '通信できませんでした。少し待って、もう一度お試しください。';
 
   function yen(n){ return Number(n).toLocaleString('ja-JP') + '円'; }
@@ -43,7 +43,7 @@
   };
 
   function render(v){
-    view = v; quote = { x: null, c: null, e: null };
+    view = v; quote = { x: null, c: null, e: null, d: null };
     show('m-loading', false); show('m-main', true); show('m-links', true);
     var st = STATUS[v.phase] || STATUS.other;
     $('m-status').dataset.s = st[0]; text('m-status', st[1]);
@@ -85,6 +85,16 @@
       text('b-submit', v.bank.have ? '口座を送り直す' : '口座を送る');
     }
 
+    /* 開業の遅れ：借りる日をずらす */
+    show('m-delay', !!v.delay);
+    if (v.delay){
+      text('d-lead', '貸し出しを始められる日が ' + jp(v.delay.from) + '（予定）に変わったため、今の借りる日には車をお渡しできません。ご迷惑をおかけして申し訳ありません。借りる日をずらすか、キャンセルをお選びください。');
+      show('d-result', false); sectionError('d', ''); $('d-agree').checked = false;
+      var dt = $('d-to');
+      dt.min = v.delay.first; dt.value = v.delay.next || '';
+      text('d-hint', v.delay.next ? '今の期間の長さで、いちばん早く借りられるのは ' + jp(v.delay.next) + ' です。ご利用の長さと料金は変わりません。' : 'ご利用の長さと料金は変わりません。');
+    }
+
     /* 延長 */
     show('m-extend', !!v.extend);
     if (v.extend){
@@ -102,6 +112,7 @@
     if (v.cancel){
       show('c-form', v.cancel.ok); show('c-off', !v.cancel.ok); text('c-off', v.cancel.why || '');
       show('c-result', false); sectionError('c', ''); $('c-agree').checked = false;
+      text('c-lead', v.delay ? '開業が遅れるため、取消料も決済手数料もかかりません。お支払い済みの料金は、全額お返しします。' : '借りる日の15日前までは、取消料はかかりません。14日前から前日までは、最初の1ヶ月分の30%です（短期は料金の全額に対して）。');
     }
     /* 途中解約 */
     show('m-endreq', !!v.endReq);
@@ -129,6 +140,31 @@
     if (qt.manual) t.push((qt.refund ? 'このうち ' + yen(qt.manual) + ' は' : '返金は') + '、銀行振込でお返しします。手続きのあと、このページで返金先の口座をお知らせください。');
     if (planned) t.push('返金は、車の返却を確認したあとに行います。');
     return t.join('');
+  }
+
+  /* ---------- 開業の遅れ：借りる日をずらす ---------- */
+  function quoteMove(){
+    var to = $('d-to').value;
+    sectionError('d', ''); show('d-result', false); quote.d = null;
+    if (!to) return sectionError('d', '新しい借りる日を選んでください。');
+    working($('d-quote'), '確かめています…', function(){
+      return api({ api: 'quote', type: 'move', to: to }).then(function(d){
+        quote.d = d;
+        text('d-start', jp(d.start)); text('d-end', jp(d.end)); text('d-period', d.label);
+        $('d-agree').checked = false; show('d-result', true);
+      }, function(err){ sectionError('d', clean(err)); });
+    });
+  }
+  function submitMove(ev){
+    ev.preventDefault();
+    if (!quote.d) return quoteMove();
+    if (!$('d-agree').checked) return sectionError('d', '内容を確認して、チェックを入れてください。');
+    sectionError('d', '');
+    working($('d-submit'), '送信しています…', function(){
+      return post({ act: 'move', to: quote.d.start, agree: true }).then(function(res){
+        render(res.view); done('借りる日を変更しました。新しい借りる日は ' + jp(res.view.start) + ' です。確認のメールをお送りしました。');
+      }, function(err){ sectionError('d', clean(err)); });
+    });
   }
 
   /* ---------- 延長 ---------- */
@@ -168,7 +204,7 @@
       return api({ api: 'quote', type: 'cancel' }).then(function(d){
         quote.c = d;
         text('c-paid', yen(d.paid));
-        text('c-fee', d.fee ? yen(d.fee) + '（最初の1ヶ月分の' + Math.round(d.rate * 100) + '%）' : '0円' + (d.paid ? '（借りる日の15日前までのため）' : ''));
+        text('c-fee', d.fee ? yen(d.fee) + '（最初の1ヶ月分の' + Math.round(d.rate * 100) + '%）' : '0円' + (d.delayed ? '（開業が遅れるため）' : (d.paid ? '（借りる日の15日前までのため）' : '')));
         show('c-deduct-row', d.deduct > 0); text('c-deduct', yen(d.deduct));
         text('c-refund', yen(d.total));
         text('c-text', d.paid ? refundNote(d, false) : 'お支払いはいただいていないため、料金はかかりません。');
@@ -238,6 +274,9 @@
   }
 
   $('b-form').addEventListener('submit', submitBank);
+  $('d-quote').addEventListener('click', quoteMove);
+  $('d-form').addEventListener('submit', submitMove);
+  $('d-to').addEventListener('change', function(){ show('d-result', false); quote.d = null; });
   $('x-quote').addEventListener('click', quoteExtend);
   $('x-form').addEventListener('submit', submitExtend);
   $('x-to').addEventListener('change', function(){ show('x-result', false); quote.x = null; });
