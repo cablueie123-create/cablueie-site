@@ -63,6 +63,27 @@
     </form>
   </section>
 
+  <section class="pay-card" id="m-delay" hidden aria-labelledby="d-h">
+    <h2 id="d-h" style="font-size:1.1rem;margin:0">開業が遅れています</h2>
+    <p class="small muted" id="d-lead" style="margin:0"></p>
+    <form id="d-form" class="doc-form" novalidate>
+      <div class="field"><label for="d-to">新しい借りる日</label><input type="date" id="d-to" required><span class="hint" id="d-hint"></span></div>
+      <button type="button" class="btn ghost" id="d-quote">新しい期間を見る</button>
+      <div class="form-error" id="d-error" role="alert" hidden></div>
+      <div id="d-result" class="doc-form" hidden>
+        <dl class="pay-rows">
+          <div><dt>新しい借りる日</dt><dd id="d-start">—</dd></div>
+          <div><dt>新しい返す日</dt><dd id="d-end">—</dd></div>
+          <div><dt>期間</dt><dd id="d-period">—</dd></div>
+          <div><dt>料金</dt><dd>変わりません</dd></div>
+        </dl>
+        <label class="check"><input type="checkbox" id="d-agree"><span>この日に変更します。</span></label>
+        <button type="submit" class="btn big" id="d-submit">借りる日を変更する</button>
+      </div>
+    </form>
+    <p class="small muted" style="margin:0">変更せずにやめるときは、下の「予約をキャンセルする」から手続きできます。</p>
+  </section>
+
   <section class="pay-card" id="m-extend" hidden aria-labelledby="x-h">
     <h2 id="x-h" style="font-size:1.1rem;margin:0">延長する</h2>
     <div class="notice warn" id="x-off" hidden></div>
@@ -88,7 +109,7 @@
     <h2 id="c-h" style="font-size:1.1rem;margin:0">予約をキャンセルする</h2>
     <div class="notice warn" id="c-off" hidden></div>
     <form id="c-form" class="doc-form" novalidate>
-      <p class="small muted" style="margin:0">借りる日の15日前までは、取消料はかかりません。14日前から前日までは、最初の1ヶ月分の30%です（短期は料金の全額に対して）。</p>
+      <p class="small muted" id="c-lead" style="margin:0">借りる日の15日前までは、取消料はかかりません。14日前から前日までは、最初の1ヶ月分の30%です（短期は料金の全額に対して）。</p>
       <button type="button" class="btn ghost" id="c-quote">取消料と返金額を見る</button>
       <div class="form-error" id="c-error" role="alert" hidden></div>
       <div id="c-result" class="doc-form" hidden>
@@ -136,6 +157,6 @@
 <footer class="site-foot"><div class="wrap foot-in"><img class="foot-emblem" src="../assets/mark-112.webp" width="64" height="59" alt="" loading="lazy"><strong>島ぐらしレンタカー</strong><span>奄美大島のマンスリーレンタカー　／　運営：Cablueie（カブリエ）中江智広　／　自家用自動車有償貸渡業 許可番号：<span data-license>申請中</span></span><nav class="foot-nav" aria-label="サイト内のリンク"><a href="../">トップ</a><a href="../#price">料金</a><a href="../#request">見積もりと申し込み</a><a href="../work/">お仕事で来島する方へ</a><a href="../guide/">長く車を使う方法と費用</a><a href="../terms/">貸渡約款</a><a href="../legal/">特定商取引法に基づく表記</a><a href="../#privacy">個人情報の取り扱い</a></nav></div></footer>
 <script src="../config.js"></script>
 <script src="../assets/sub.js"></script>
-<script src="../assets/manage.js"></script>
+<script src="../assets/manage.js?v=20261101"></script>
 </body>
 </html>
