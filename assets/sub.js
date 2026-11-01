@@ -3,6 +3,10 @@
   'use strict';
   var CFG = window.CABLUEIE_CONFIG || {};
   if (!CFG.api) return;
+  /* 訪問者数を数える（お支払いなど、お客様ごとのページは数えない） */
+  if (!/\/(pay|manage|docs)\//.test(location.pathname)){
+    var hit = document.createElement('script'); hit.src = '../assets/hit.js'; document.head.appendChild(hit);
+  }
   fetch(CFG.api + '?api=public')
     .then(function(r){ return r.json(); })
     .then(function(res){
