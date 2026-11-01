@@ -252,6 +252,10 @@ img{max-width:100%}
 .upload.has{border-style:solid;border-color:var(--sea);background:var(--surface)}
 .upload.err{border-color:var(--warn);background:var(--warn-soft)}
 .upload:focus-within{outline:3px solid var(--sea);outline-offset:2px}
+.upload.shoot input{inset:auto;left:0;top:0;width:1px;height:1px;pointer-events:none}
+.u-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:4px}
+.u-btn{min-height:44px;padding:8px 14px;border:2px solid var(--sea);border-radius:999px;background:var(--sea);color:#fff;font:inherit;font-size:.88rem;font-weight:700;cursor:pointer}
+.u-btn.ghost{background:var(--surface);color:var(--sea)}
 .uses{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .use{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:grid;gap:6px;align-content:start}
 .use strong{color:var(--sea-deep,var(--sea))}
