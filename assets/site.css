@@ -605,3 +605,17 @@ p,li,dd{text-wrap:pretty}
 .rf-rows dt{color:var(--muted);min-width:0}
 .rf-rows dt small{display:block;font-size:.76rem}
 .rf-rows dd{margin:0;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* apply page */
+.apply-page{padding-block:28px 48px;display:grid;gap:20px}
+.apply-page h1{font-size:1.6rem}
+.apply-intro{display:grid;gap:10px}
+.cal-wrap{display:grid;gap:5px;min-width:0}
+.cal-toggle{justify-self:start}
+.collapsed .rs[aria-pressed="true"]{border-color:var(--line);box-shadow:none}
+.estimate .btn.big{width:100%}
+.two{align-items:start}
+#quote .two{grid-template-columns:minmax(0,1fr)}
+@media (min-width:421px){ .apply-page .two:has(select){grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)} }
+@media (max-width:760px){ .apply-page .estimate{order:-1} }
+@media (max-width:400px){ .rs-v{white-space:normal} }
