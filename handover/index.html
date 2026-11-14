@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>受け取り・返却の手続き｜島ぐらしレンタカー</title>
+<meta name="description" content="島ぐらしレンタカーの、車の受け取りと返却の手続きのページです。">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0A7BA3">
+<link rel="icon" href="../favicon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800;900&amp;family=Montserrat:wght@800&amp;family=Zen+Maru+Gothic:wght@500;700;900&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<link rel="stylesheet" href="../assets/site.css?v=20261102">
+<style>
+.ho{max-width:560px}
+.ho-card{display:grid;gap:16px}
+.ho-prog{display:flex;align-items:center;gap:10px;font-size:.9rem;font-weight:700;color:var(--muted,#5b6b78)}
+.ho-bar{flex:1;height:8px;border-radius:99px;background:#e3edf2;overflow:hidden}
+.ho-bar i{display:block;height:100%;background:#0A7BA3;border-radius:99px;transition:width .3s}
+.ho-card h2{font-size:1.35rem;line-height:1.5;margin:0}
+.ho-lead{font-size:1.05rem;line-height:1.8;margin:0}
+.ho-box{border:2px solid #cfe3ec;border-radius:14px;padding:14px 16px;background:#f5fafc;font-size:1.05rem;line-height:1.8;overflow-wrap:anywhere}
+.ho-box strong{font-size:1.15rem}
+.ho-illus{text-align:center;background:#fff;border:1px solid #e3edf2;border-radius:14px;padding:12px}
+.ho-illus img{max-width:100%;height:auto;max-height:200px}
+.ho-shot{display:grid;gap:10px}
+.ho-shot img{width:100%;max-height:42vh;object-fit:contain;background:#f5fafc;border-radius:12px;border:1px solid #d8e4ea}
+.ho-btns{display:grid;gap:10px}
+.ho-btns .btn{width:100%;justify-content:center;text-align:center;font-size:1.1rem;min-height:56px}
+.ho-row{display:flex;gap:10px;flex-wrap:wrap}
+.ho-row .btn{flex:1 1 140px}
+.ho-back{background:none;border:0;color:#0A7BA3;font:inherit;font-weight:700;text-decoration:underline;padding:6px 0;cursor:pointer;justify-self:start}
+.ho-help{font-size:.92rem;line-height:1.7;color:#5b6b78;border-top:1px dashed #cfe3ec;padding-top:12px}
+.ho-help a{font-weight:700}
+.ho-pad{position:relative;border:2px dashed #7fb2c8;border-radius:14px;background:#fff;touch-action:none}
+.ho-pad canvas{display:block;width:100%;height:190px;touch-action:none;border-radius:12px}
+.ho-pad span{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;color:#9bb3c0;font-size:1.05rem;pointer-events:none}
+.ho-field{display:grid;gap:6px}
+.ho-field label{font-weight:700}
+.ho-field input,.ho-field select{font-size:1.3rem;padding:12px;border:2px solid #cfe3ec;border-radius:12px;width:100%;box-sizing:border-box;font-family:inherit}
+.ho-field input{letter-spacing:.08em;font-variant-numeric:tabular-nums}
+.ho-check{display:flex;gap:12px;align-items:flex-start;font-size:1.05rem;line-height:1.7;padding:12px 14px;border:2px solid #cfe3ec;border-radius:12px;background:#fff;cursor:pointer}
+.ho-check input{width:26px;height:26px;flex:none;margin-top:2px}
+.ho-list{margin:0;padding-left:1.3em;line-height:1.8}
+.ho-thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.ho-thumbs img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:1px solid #d8e4ea}
+.ho-hide{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+</style>
+</head>
+<body class="subpage">
+<header class="topbar"><div class="wrap topbar-in"><a class="tb-brand" href="../"><img class="tb-emblem" src="../assets/mark-112.webp" width="56" height="51" alt=""><img class="tb-name-img" src="../assets/name-360.webp" width="360" height="53" alt="島ぐらしレンタカー"></a></div></header>
+<main class="wrap pay ho" id="ho">
+  <div class="notice info" id="ho-loading">ご予約の情報を読み込んでいます…</div>
+  <div class="notice warn" id="ho-error" role="alert" hidden></div>
+  <section class="pay-card ho-card" id="ho-step" hidden aria-live="polite"></section>
+</main>
+<footer class="site-foot"><div class="wrap foot-in"><img class="foot-emblem" src="../assets/mark-112.webp" width="64" height="59" alt="" loading="lazy"><strong>島ぐらしレンタカー</strong><span>奄美大島のマンスリーレンタカー　／　運営：Cablueie（カブリエ）中江智広　／　自家用自動車有償貸渡業 許可番号：<span data-license>申請中</span></span><nav class="foot-nav" aria-label="サイト内のリンク"><a href="../">トップ</a><a href="../terms/">貸渡約款</a><a href="../legal/">特定商取引法に基づく表記</a><a href="../#privacy">個人情報の取り扱い</a></nav></div></footer>
+<script src="../config.js"></script>
+<script src="../assets/sub.js"></script>
+<script src="../assets/handover.js?v=20261114"></script>
+</body>
+</html>

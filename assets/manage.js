@@ -51,6 +51,9 @@
     text('m-start', v.start ? jp(v.start) : '—'); text('m-end-date', v.end ? jp(v.end) : '—'); text('m-period', v.period || '—');
     show('m-paid-row', v.paid > 0); text('m-paid', yen(v.paid));
     $('m-docs').href = '../docs/?' + new URLSearchParams({ r: ids.r, k: ids.k }).toString();
+    /* 受け取り・返却の手続き（会わずに受け渡すとき）。確定してから返すまでのあいだだけ出す */
+    var ho = $('m-ho');
+    if (ho){ ho.hidden = !v.ho; ho.href = '../handover/?' + new URLSearchParams({ r: ids.r, k: ids.k }).toString(); }
 
     var notes = [], pay = $('m-pay');
     pay.hidden = true;
