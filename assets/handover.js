@@ -139,7 +139,7 @@
 
   function stepWhere(){
     var pickup = info.mode === 'pickup';
-    var body = [lead(pickup ? info.name + ' 様、ご利用ありがとうございます。車の受け取りの手続きをします。5分ほどで終わります。' : info.name + ' 様、ご利用ありがとうございました。車の返却の手続きをします。')];
+    var body = [lead(pickup ? info.name + ' 様、ご利用ありがとうございます。車の受け取りの手続きをします。3分ほどで終わります。' : info.name + ' 様、ご利用ありがとうございました。車の返却の手続きをします。')];
     if (pickup){
       var box = el('div', { class: 'ho-box' }, [el('div', { text: '車の場所' })]);
       if (info.spot) box.appendChild(el('strong', { text: info.spot }));
@@ -156,7 +156,7 @@
     var body = [];
     if (info.key) body.push(el('div', { class: 'ho-box' }, [el('div', { text: '鍵の置き場所' }), el('strong', { text: info.key })]));
     else body.push(lead('鍵の置き場所は、予約の確定のときにお知らせした場所です。わからないときは、下の連絡先にご連絡ください。'));
-    body.push(lead('鍵を見つけたら、エンジンはまだかけずに、車のまわりの写真を撮ります。'));
+    body.push(lead('鍵を見つけたら、エンジンはまだかけずに、車のまわりを1周見てください。'));
     frame('鍵を取り出してください', body, el('div', { class: 'ho-btns' }, [btn('鍵を見つけました', 'big', next)]));
   }
   function stepShot(i){
@@ -184,7 +184,8 @@
   }
   function stepDamage(){
     var pickup = info.mode === 'pickup', body = [];
-    body.push(lead(pickup ? '車のまわりを見て、キズやヘコミはありましたか？　小さなものでもかまいません。' : '借りているあいだに、新しいキズやヘコミはできましたか？'));
+    body.push(lead(pickup ? '車のまわりを1周見て、気になるキズやヘコミはありましたか？' : '借りているあいだに、新しいキズやヘコミはできましたか？'));
+    if (pickup && st.damage !== true) body.push(el('p', { class: 'small muted', text: '小さなものでも、気になったら写真を撮っておくと、返すときに安心です。' }));
     if (st.damage === true){
       body.push(lead('キズやヘコミに近づいて、1か所ずつ撮ってください（4枚まで）。'));
       var th = el('div', { class: 'ho-thumbs' });
@@ -196,7 +197,7 @@
       var row = [];
       if (st.extra.length < 4) row.push(btn(st.extra.length ? 'もう1枚撮る' : 'キズを撮る', st.extra.length ? 'ghost' : 'big', add(true)));
       if (st.extra.length) row.unshift(btn('次へ', 'big', next));
-      row.push(btn('やっぱりキズはない', 'ghost', function(){ st.damage = false; st.extra = []; next(); }));
+      row.push(btn(pickup ? 'やっぱり気になるキズはない' : 'やっぱりキズはない', 'ghost', function(){ st.damage = false; st.extra = []; next(); }));
       frame('キズ・ヘコミ', body, el('div', { class: 'ho-btns' }, row));
       return;
     }
@@ -257,7 +258,7 @@
     }
     var ac = el('input', { type: 'checkbox' }); ac.checked = st.agree;
     ac.addEventListener('change', function(){ st.agree = ac.checked; update(); });
-    body.push(el('label', { class: 'ho-check' }, [ac, el('span', { text: pickup ? '上の内容と、撮った写真の車の状態を確かめて、車を受け取りました。' : '撮った写真の状態で、車を返しました。' })]));
+    body.push(el('label', { class: 'ho-check' }, [ac, el('span', { text: pickup ? '上の内容と、車の状態を確かめて、車を受け取りました。' : '撮った写真の状態で、車を返しました。' })]));
     var pad = sigPad();
     body.push(el('div', { class: 'ho-field' }, [el('span', { text: '最後に、お名前を指で書いてください', style: 'font-weight:700' }), pad.node]));
     body.push(el('div', { class: 'ho-row' }, [btn('サインを書き直す', 'ghost', function(){ pad.clear(); })]));
@@ -276,7 +277,8 @@
     var label = send.textContent;
     send.disabled = true; send.textContent = '送信しています…（1分ほどかかることがあります）';
     var data = { r: ids.r, k: ids.k, mode: info.mode, agree: st.agree, keyBack: st.keyBack,
-      photos: st.shots.map(function(x){ return { mime: x.mime, data: x.data }; }),
+      /* 写真には名前（前・右…メーター）を付けて送る。受け取りはメーターだけ */
+      photos: SHOTS.map(function(s, i){ var x = st.shots[i]; return x ? { label: s.label, mime: x.mime, data: x.data } : null; }).filter(Boolean),
       extra: st.damage ? st.extra.map(function(x){ return { mime: x.mime, data: x.data }; }) : [],
       sig: pad.png() };
     if (info.mode === 'pickup'){ data.licNo = digits(st.licNo); data.licKind = st.licKind; data.lic2No = digits(st.lic2No); data.lic2Kind = st.lic2Kind; }
@@ -319,12 +321,13 @@
     if (d.mode === 'early') return stepInfo('受け取りの手続きは、借りる日からです', '受け取りの手続きは、借りる日（' + jp(d.start) + '）からできます。当日、車に着いたら、このページをもう一度開いてください。鍵の置き場所も、その日に表示されます。');
     if (d.mode === 'done') return stepInfo('手続きは終わっています', '返却の手続きまで終わっています（受付：' + (d.returnedAt || '') + '）。ご利用ありがとうございました。');
     if (d.mode !== 'pickup' && d.mode !== 'return') return stepInfo('今は手続きできません', 'このご予約では、今は受け取り・返却の手続きができません。ご不明な点は、お問い合わせください。');
-    steps = [stepWhere];
-    if (d.mode === 'pickup') steps.push(stepKey);
-    SHOTS.forEach(function(s, i){ steps.push(stepShot(i)); });
-    steps.push(stepDamage);
-    if (d.mode === 'pickup') steps.push(stepLicense);
-    steps.push(stepSign);
+    /* 受け取り：まわりは見るだけ（車を置いたときの写真は当方で撮る）→ 気になるキズだけ撮る → メーター。返却：まわり4枚とメーター */
+    if (d.mode === 'pickup') steps = [stepWhere, stepKey, stepDamage, stepShot(4), stepLicense, stepSign];
+    else {
+      steps = [stepWhere];
+      SHOTS.forEach(function(s, i){ steps.push(stepShot(i)); });
+      steps.push(stepDamage, stepSign);
+    }
     go(0);
   }
   window.addEventListener('beforeunload', function(ev){ if (!sent && st.shots.length){ ev.preventDefault(); ev.returnValue = ''; } });
