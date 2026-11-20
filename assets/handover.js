@@ -14,7 +14,7 @@
     { label: 'メーター', title: 'メーターと燃料の目もりを撮ってください', img: '', hint: 'エンジンをかけてから、走った距離（km）と燃料の目もりが読めるように撮ります。' }
   ];
   var info = null, steps = [], at = 0, busy = false, sent = false;
-  var st = { shots: [], extra: [], damage: null, licNo: '', licKind: '', lic2No: '', lic2Kind: '', agree: false, keyBack: false, sig: null };
+  var st = { shots: [], extra: [], damage: null, licNo: '', licKind: '', lic2No: '', lic2Kind: '', lic2Addr: '', agree: false, keyBack: false, sig: null };
 
   /* ---------- 小さな道具 ---------- */
   function jp(s){ var p = String(s || '').split('-'); return p.length === 3 ? p[0] + '年' + Number(p[1]) + '月' + Number(p[2]) + '日' : ''; }
@@ -211,6 +211,11 @@
     input.addEventListener('input', function(){ onInput(input.value); });
     return el('div', { class: 'ho-field' }, [el('label', { for: id, text: label }), input]);
   }
+  function textField(id, label, value, onInput){
+    var input = el('input', { id: id, type: 'text', autocomplete: 'off', maxlength: '120', value: value || '' });
+    input.addEventListener('input', function(){ onInput(input.value); });
+    return el('div', { class: 'ho-field' }, [el('label', { for: id, text: label }), input]);
+  }
   function kindField(id, label, value, onChange){
     var sel = el('select', { id: id });
     (info.kinds || []).forEach(function(k){ var o = el('option', { value: k, text: k }); if (k === value) o.selected = true; sel.appendChild(o); });
@@ -225,9 +230,10 @@
     body.push(licField('ho-lic', '免許証の番号（12けた）', st.licNo, function(v){ st.licNo = v; }));
     body.push(kindField('ho-kind', '免許の種類', st.licKind, function(v){ st.licKind = v; }));
     if (info.driver2){
-      body.push(lead('追加の運転者（' + info.driver2 + ' 様）の免許証の番号も、わかれば入れてください。'));
+      body.push(lead('追加の運転者（' + info.driver2 + ' 様）の免許証の番号と住所も、わかれば入れてください。'));
       body.push(licField('ho-lic2', info.driver2 + ' 様の免許証の番号', st.lic2No, function(v){ st.lic2No = v; }));
       body.push(kindField('ho-kind2', info.driver2 + ' 様の免許の種類', st.lic2Kind, function(v){ st.lic2Kind = v; }));
+      body.push(textField('ho-addr2', info.driver2 + ' 様の住所（免許証に書いてある住所）', st.lic2Addr, function(v){ st.lic2Addr = v; }));
     }
     body.push(msg);
     frame('運転免許証の番号', body, el('div', { class: 'ho-btns' }, [btn('次へ', 'big', function(){
@@ -281,7 +287,7 @@
       photos: SHOTS.map(function(s, i){ var x = st.shots[i]; return x ? { label: s.label, mime: x.mime, data: x.data } : null; }).filter(Boolean),
       extra: st.damage ? st.extra.map(function(x){ return { mime: x.mime, data: x.data }; }) : [],
       sig: pad.png() };
-    if (info.mode === 'pickup'){ data.licNo = digits(st.licNo); data.licKind = st.licKind; data.lic2No = digits(st.lic2No); data.lic2Kind = st.lic2Kind; }
+    if (info.mode === 'pickup'){ data.licNo = digits(st.licNo); data.licKind = st.licKind; data.lic2No = digits(st.lic2No); data.lic2Kind = st.lic2Kind; data.lic2Addr = String(st.lic2Addr || '').trim(); }
     fetch(CFG.api, { method: 'POST', body: JSON.stringify({ action: 'ho', data: data }) })
       .then(function(resp){ return resp.json(); })
       .then(function(res){
