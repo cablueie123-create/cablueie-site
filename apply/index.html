@@ -20,15 +20,20 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800;900&amp;family=Montserrat:wght@800&amp;family=Zen+Maru+Gothic:wght@500;700;900&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=20261102">
+<link rel="stylesheet" href="../assets/site.css?v=20261125">
 </head>
 <body class="subpage">
 <header class="topbar"><div class="wrap topbar-in"><a class="tb-brand" href="../"><img class="tb-emblem" src="../assets/mark-112.webp" width="56" height="51" alt=""><img class="tb-name-img" src="../assets/name-360.webp" width="360" height="53" alt="島ぐらしレンタカー"></a><a class="tb-link" href="../#request">見積もりに戻る</a></div></header>
 <main class="wrap apply-page" id="apply-page">
   <div class="apply-intro" id="apply-intro">
     <h1>お申し込み</h1>
-    <p class="muted">お客様の情報を入力して送ってください。運転免許証の表と裏の写真が必要です。写真は、このページで撮影できます。</p>
+    <p class="free-line"><strong>送っただけでは、お金はかかりません。</strong><span id="free-line-more">この申し込みは仮予約です。お支払いは、こちらで内容を確認してからご案内します。</span></p>
+    <p class="muted">お客様の情報を入力して送ってください。運転免許証の写真は、このページで撮って送るか、あとで送れます。</p>
     <div class="notice info" id="status-note" hidden></div>
+    <div class="ask-top" id="ask-top" hidden>
+      <span class="small">申し込む前に、気軽に聞いてください。</span>
+      <div class="ask-btns" id="ask-btns"></div>
+    </div>
   </div>
   <div class="req" id="req-area">
       <form id="req-form" class="apply" novalidate>
@@ -73,6 +78,15 @@
 
         <div class="group" role="group" aria-labelledby="g2">
           <h3 class="group-h" id="g2"><span class="step">2</span>お客様の情報</h3>
+          <label class="check"><input type="checkbox" id="co-on"><span>会社（勤務先）の担当の方が、代わりに申し込む</span></label>
+          <div class="co-area" id="co-area" hidden>
+            <p class="small muted">お名前・フリガナ・住所は、車を使う方（借受人）のものを入れてください。電話番号とメールアドレスは、担当の方のものでかまいません（お支払いのご案内が届きます）。</p>
+            <div class="field"><label for="co-name">担当の方の会社名・お名前<span class="req-badge">必須</span></label><input type="text" id="co-name" autocomplete="organization" placeholder="例：〇〇株式会社 総務部 山田"></div>
+            <div class="two">
+              <div class="field"><label for="user-phone">車を使う方の携帯番号<span class="req-badge">必須</span></label><input type="tel" id="user-phone" inputmode="tel" autocomplete="off"></div>
+              <div class="field"><label for="user-email">車を使う方のメールアドレス<span class="req-badge">必須</span></label><input type="email" id="user-email" autocomplete="off"><span class="hint">受け取りのご案内と貸渡証が届きます。スマホで見られるアドレスにしてください</span></div>
+            </div>
+          </div>
           <div class="two">
             <div class="field"><label for="req-name">お名前<span class="req-badge">必須</span></label><input type="text" id="req-name" autocomplete="name" required></div>
             <div class="field"><label for="req-kana">フリガナ<span class="req-badge">必須</span></label><input type="text" id="req-kana" required></div>
@@ -83,11 +97,20 @@
           </div>
           <div class="field"><label for="req-address">住所（運転免許証の住所）<span class="req-badge">必須</span></label><input type="text" id="req-address" autocomplete="street-address" required></div>
           <div class="field"><label for="req-stay">奄美での滞在先（任意）</label><input type="text" id="req-stay" placeholder="例：〇〇病院の職員寮"></div>
-          <div class="field"><label for="req-work">勤務先・滞在の目的<span class="req-badge">必須</span></label><input type="text" id="req-work" placeholder="例：〇〇病院（看護師）／〇〇株式会社（出張）" required></div>
+          <div class="field"><label for="req-work">勤務先・滞在の目的（任意）</label><input type="text" id="req-work" placeholder="例：〇〇病院（看護師）／〇〇株式会社（出張）"></div>
         </div>
 
         <div class="group" role="group" aria-labelledby="g3">
           <h3 class="group-h" id="g3"><span class="step">3</span>運転免許証</h3>
+          <fieldset class="field">
+            <legend>写真を送るタイミング</legend>
+            <div class="radios">
+              <label><input type="radio" name="lic-when" id="lic-now" value="now" checked>このページで送る</label>
+              <label><input type="radio" name="lic-when" id="lic-later" value="later">あとで送る</label>
+            </div>
+          </fieldset>
+          <div class="notice info" id="lic-later-note" hidden>申し込みのあと、写真を送るページのリンクをメールでお送りします（送った直後の画面にもボタンが出ます）。写真が届いて確認できたら、お支払いのご案内をお送りします。<strong>写真が届くまで、ご予約は確定しません。</strong>ほかに運転する人がいるときも、そのページから届け出られます。</div>
+          <div class="lic-now" id="lic-now-area">
           <p class="small muted">表と裏を撮影して選んでください。文字がはっきり読めるよう、明るい場所で撮ってください。写真は自動で小さくして送ります。写真は本人確認のためだけに使い、受け渡しが終わったら削除します。</p>
           <div class="uploads">
             <label class="upload" id="tile-front"><input type="file" id="lic-front" accept="image/*"><img alt="" hidden><span class="u-label">免許証の表<span class="req-badge">必須</span></span><span class="u-hint">タップして撮影・選択</span></label>
@@ -100,6 +123,7 @@
               <label class="upload" id="tile-d2front"><input type="file" id="d2-front" accept="image/*"><img alt="" hidden><span class="u-label">その人の免許証の表</span><span class="u-hint">タップして撮影・選択</span></label>
               <label class="upload" id="tile-d2back"><input type="file" id="d2-back" accept="image/*"><img alt="" hidden><span class="u-label">その人の免許証の裏</span><span class="u-hint">タップして撮影・選択</span></label>
             </div>
+          </div>
           </div>
         </div>
 
@@ -140,9 +164,13 @@
           <label class="check" id="agree-driver-row"><input type="checkbox" id="agree-driver"><span>運転する人は全員、21歳以上で、運転免許を取って1年以上です。</span></label>
           <label class="check" id="agree-privacy-row"><input type="checkbox" id="agree-privacy"><span><a href="../#privacy" target="_blank" rel="noopener">個人情報の取り扱い</a>に同意します。</span></label>
           <div class="hp" aria-hidden="true"><label for="req-website">この欄は空のままにしてください</label><input type="text" id="req-website" tabindex="-1" autocomplete="off"></div>
+          <div class="sum-bar" id="sum-bar" aria-live="polite">
+            <div class="sum-row"><span class="sum-k">期間の合計</span><strong id="sum-total">—</strong></div>
+            <span class="small muted" id="sum-sub">ご利用期間を選ぶと、合計が出ます。</span>
+          </div>
           <div class="form-error" id="form-error" role="alert" hidden></div>
           <button type="submit" class="btn big" id="req-submit">この内容で申し込む</button>
-          <p class="small muted">受け渡しのときに、運転免許証の原本も確認します。</p>
+          <p class="small muted">送っただけでは、お金はかかりません。受け渡しのときに、運転免許証の原本も確認します。</p>
         </div>
       </form>
 
@@ -174,6 +202,7 @@
         <p><span id="done-line-how"></span>受付番号「<span id="done-line-rid"></span>」を送ってください。こちらからはお客様のLINEを探せないため、先にメッセージをお願いします。</p>
         <a class="btn ghost" id="done-line-add" href="#" target="_blank" rel="noopener">LINEで友だち追加</a>
       </div>
+      <a class="btn big" id="done-docs" href="#" hidden>運転免許証の写真を送る</a>
       <a class="btn big" id="done-pay" href="#" hidden>お支払いに進む</a>
       <p class="small muted">メールが届かないときは、迷惑メールのフォルダを確認するか、下のお問い合わせ先にご連絡ください。</p>
     </div>
@@ -188,7 +217,7 @@
 </main>
 <footer class="site-foot"><div class="wrap foot-in"><img class="foot-emblem" src="../assets/mark-112.webp" width="64" height="59" alt="" loading="lazy"><strong>島ぐらしレンタカー</strong><span>奄美大島のマンスリーレンタカー　／　運営：Cablueie（カブリエ）中江智広　／　自家用自動車有償貸渡業 許可番号：<span data-license>申請中</span></span><nav class="foot-nav" aria-label="サイト内のリンク"><a href="../">トップ</a><a href="../#price">料金</a><a href="../#request">見積もりと申し込み</a><a href="../work/">お仕事で来島する方へ</a><a href="../guide/">長く車を使う方法と費用</a><a href="../terms/">貸渡約款</a><a href="../legal/">特定商取引法に基づく表記</a><a href="../#privacy">個人情報の取り扱い</a></nav></div></footer>
 <script src="../config.js"></script>
-<script src="../assets/booking.js?v=20261101"></script>
+<script src="../assets/booking.js?v=20261125"></script>
 <script src="../assets/shoot.js?v=20261101"></script>
 <script src="../assets/hit.js?v=20261101"></script>
 </body>

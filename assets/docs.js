@@ -85,6 +85,8 @@
       $('kind-driver').disabled = true; $('kind-driver-row').classList.add('off');
       if (d.driver2){ note.hidden = false; note.textContent = '追加できる運転者は1人までです。変更したいときは、お問い合わせください。'; }
     }
+    /* 申し込みで「あとで送る」を選んだ人の、はじめての写真（撮り直しではない） */
+    if (d.first){ var lab = $('kind-self').parentNode; lab.lastChild.textContent = 'ご本人の免許証'; }
     if (q.get('kind') === 'driver' && d.canAddDriver) $('kind-driver').checked = true;
     renderKind();
     if (!d.open){
@@ -118,9 +120,12 @@
         if (!res || !res.ok) throw new Error((res && res.error) || '');
         $('doc-main').hidden = true;
         var done = $('doc-done'); done.hidden = false;
+        var rd = res.data || {};
         $('doc-done-text').textContent = k === 'driver'
           ? '運転する人の追加（' + name + ' 様）と免許証の写真を受け取りました。確認して、問題があるときだけご連絡します。受け渡しのときに、その方の運転免許証の原本も確認します。'
-          : '免許証の写真を受け取りました。確認して、問題があるときだけご連絡します。';
+          : (rd.first
+            ? '運転免許証の写真を受け取りました。ありがとうございます。' + (rd.payMail ? 'お支払いのご案内を、メールでお送りしました。お支払いが済んだ時点で、ご予約が確定します。' : '写真とお申し込みの内容を確認して、お支払いのご案内をメールでお送りします。') + 'ほかに運転する人がいるときは、このページをもう一度開いて「運転する人を追加する」から届け出てください。'
+            : '免許証の写真を受け取りました。確認して、問題があるときだけご連絡します。');
         done.scrollIntoView({ behavior: 'smooth', block: 'start' }); done.focus({ preventScroll: true });
       })
       .catch(function(err){

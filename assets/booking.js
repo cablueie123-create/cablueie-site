@@ -18,6 +18,7 @@
     bookings: Array.isArray(B.blocks) ? B.blocks : [],
     today: B.today || null,
     openFrom: '',
+    autoPay: false,
     loaded: false
   };
   function applyBoot(D){
@@ -32,6 +33,7 @@
     state.bookings = Array.isArray(D.blocks) ? D.blocks : [];
     state.today = D.today || state.today;
     state.openFrom = /^\d{4}-\d{2}-\d{2}$/.test(D.openFrom || '') ? D.openFrom : '';
+    state.autoPay = !!D.autoPay;
     state.loaded = true;
     if (!touched){ $('req-start').value = ''; $('req-end').value = ''; defaultRange(); pick.view = firstOf(parse(startVal() || firstDay())); }
     if (startVal() && startVal() < firstDay()) pick.view = firstOf(parse(firstDay()));
@@ -160,6 +162,18 @@
     var v = sel.value, h = $('contact-hint');
     h.textContent = v === 'LINE' ? (ln.id ? '申し込みのあと、LINEで「' + ln.id + '」を友だち追加して、受付番号を送ってください。' : '申し込みが済むと、LINEの友だち追加ボタンが出ます。追加したら、受付番号を送ってください。')
       : (v === 'メール' ? '上のメールアドレスにご連絡します。' : (v === 'SMS' ? '上の電話番号にSMSでご連絡します。' : '上の電話番号にご連絡します。'));
+  }
+  /* 申し込みページの上：送っただけではお金がかからないことと、申し込む前に聞ける連絡先 */
+  function renderApplyTop(){
+    var more = $('free-line-more');
+    if (more) more.textContent = state.autoPay ? 'お支払いは、このあとメールで届くお支払いページからです。払った時点で、ご予約が確定します。'
+      : 'この申し込みは仮予約です。お支払いは、こちらで内容を確認してからご案内します。';
+    var box = $('ask-top'), btns = $('ask-btns'); if (!box || !btns) return;
+    btns.textContent = '';
+    var ln = lineInfo(), ph = String(state.contact.phone || '').trim();
+    if (ln){ var a = document.createElement('a'); a.className = 'btn small line'; a.href = ln.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'LINEで聞く'; btns.appendChild(a); }
+    if (ph){ var b = document.createElement('a'); b.className = 'btn ghost small'; b.href = 'tel:' + ph.replace(/[^\d+]/g, ''); b.textContent = '電話する（' + ph + '）'; btns.appendChild(b); }
+    box.hidden = !btns.children.length;
   }
   function showDoneLine(id, contact){
     var box = $('done-line'); if (!box) return;
@@ -364,6 +378,14 @@
     h.hidden=ok;
     h.textContent = state.status==='pause' ? '現在は申し込みを受け付けていません。' : '期間を選ぶと、申し込みに進めます。';
   }
+  /* 送信ボタンのすぐ上にも、期間の合計を出す（スマホでは見積もりがページの上のほうにあるため） */
+  function setSum(r, prob){
+    var t=$('sum-total'); if (!t) return;
+    t.textContent = r ? yen(r.total) : '—';
+    $('sum-sub').textContent = !r ? 'ご利用期間を選ぶと、合計が出ます。'
+      : jpw(r.s)+' 〜 '+jpw(r.e)+'（'+r.label+'・'+r.days+'日間）'+(r.noc ? '・NOCサポート込み' : '')+(r.hoAmt ? '・受け渡し料込み' : '');
+    $('sum-bar').classList.toggle('warn', !!prob);
+  }
   function renderEstimate(){
     var r=period(), P=state.prices, chk=$('avail-check'), sv=startVal();
     $('rs-start-v').textContent = sv ? jpw(parse(sv)) : '—';
@@ -380,6 +402,7 @@
       $('est-total').textContent='—'; $('est-first').textContent='';
       setText('return-hint', '返却日は、ご利用期間で選んだ「返す日」です。');
       if (r){ chk.hidden=false; chk.className='notice warn'; chk.textContent=prob; } else { chk.hidden=true; }
+      setSum(null);
       return;
     }
     sel.start=r.start; sel.end=r.end;
@@ -413,6 +436,7 @@
     if (prob){ chk.className='notice warn'; chk.textContent=prob; }
     else if (!state.loaded){ chk.className='notice info'; chk.textContent='空き状況を確認しています…'; }
     else { chk.className='notice ok'; chk.textContent='この期間は空いています。'; }
+    setSum(r, prob);
   }
 
   /* ---------- period picker (calendar) ---------- */
@@ -581,7 +605,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('.rf-preset'), function(b){ b.addEventListener('click', function(){ var p=b.getAttribute('data-p').split(','); $('rf-bm').value=p[0]; $('rf-bd').value=p[1]; $('rf-um').value=p[2]; $('rf-ud').value=p[3]; renderRefund(); }); });
   }
 
-  function renderAll(){ renderStatus(); renderPrices(); renderFooter(); renderContactList($('contacts')); renderContactChoice(); renderEstimate(); renderYear(); renderCal(); renderRefund(); }
+  function renderAll(){ renderStatus(); renderPrices(); renderFooter(); renderContactList($('contacts')); renderContactChoice(); renderApplyTop(); renderEstimate(); renderYear(); renderCal(); renderRefund(); }
 
   /* ---------- license photos ---------- */
   var files = { front:null, back:null, d2front:null, d2back:null };
@@ -647,32 +671,71 @@
     box.append(p, ul); box.hidden = false;
     if (!quiet) box.scrollIntoView({ behavior:'smooth', block:'center' });
   }
+  /* 免許証の写真を「あとで送る」を選んだか（写真が届くまで、お支払いの案内は出ない） */
+  function licLater(){ var el=$('lic-later'); return !!(el && el.checked); }
   function validate(){
-    var errs = [];
-    var need = [['req-name','お名前'],['req-kana','フリガナ'],['req-phone','電話番号'],['req-email','メールアドレス'],['req-address','住所'],['req-work','勤務先・滞在の目的']];
-    need.forEach(function(n){ var bad = !val(n[0]); markField(n[0], bad); if (bad) errs.push(n[1]+'を入力してください。'); });
+    var errs = [], keys = [];
+    /* 勤務先・滞在の目的は任意（2026-11-25） */
+    var need = [['req-name','お名前','name'],['req-kana','フリガナ','kana'],['req-phone','電話番号','phone'],['req-email','メールアドレス','email'],['req-address','住所','address']];
+    need.forEach(function(n){ var bad = !val(n[0]); markField(n[0], bad); if (bad){ errs.push(n[1]+'を入力してください。'); keys.push(n[2]); } });
+    markField('req-work', false);
+    /* 会社（勤務先）の担当の方が代わりに申し込むとき：車を使う方の携帯・メール（受け取りのご案内と貸渡証の送り先） */
+    if ($('co-on').checked){
+      var cn = !val('co-name'); markField('co-name', cn); if (cn){ errs.push('担当の方の会社名・お名前を入力してください。'); keys.push('company'); }
+      var up = val('user-phone').replace(/[^0-9]/g, ''); markField('user-phone', up.length < 10); if (up.length < 10){ errs.push('車を使う方の携帯番号を確認してください。'); keys.push('company'); }
+      var ue = val('user-email'), ueBad = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ue); markField('user-email', ueBad); if (ueBad){ errs.push(ue ? '車を使う方のメールアドレスの形を確認してください。' : '車を使う方のメールアドレスを入力してください。'); keys.push('company'); }
+    } else { ['co-name','user-phone','user-email'].forEach(function(id){ markField(id, false); }); }
     var em = val('req-email');
-    if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){ markField('req-email', true); errs.push('メールアドレスの形を確認してください。'); }
+    if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){ markField('req-email', true); errs.push('メールアドレスの形を確認してください。'); keys.push('email'); }
     var ph = val('req-phone').replace(/[^0-9]/g, '');
-    if (val('req-phone') && ph.length < 10){ markField('req-phone', true); errs.push('電話番号を確認してください。'); }
+    if (val('req-phone') && ph.length < 10){ markField('req-phone', true); errs.push('電話番号を確認してください。'); keys.push('phone'); }
     var r = period(), prob = periodProblem(r);
-    markField('req-start', !!prob); if (prob){ errs.push(prob); showCal(true); }
-    ['tile-front','tile-back','tile-d2front','tile-d2back'].forEach(function(id){ var k={'tile-front':'front','tile-back':'back','tile-d2front':'d2front','tile-d2back':'d2back'}[id]; if (files[k]) $(id).classList.remove('err'); });
-    if (!files.front){ $('tile-front').classList.add('err'); errs.push('運転免許証の表の写真を選んでください。'); }
-    if (!files.back){ $('tile-back').classList.add('err'); errs.push('運転免許証の裏の写真を選んでください。'); }
-    if ($('d2-on').checked){
-      var bn = !val('d2-name'); markField('d2-name', bn); if (bn) errs.push('ほかに運転する人のお名前を入力してください。');
-      if (!files.d2front){ $('tile-d2front').classList.add('err'); errs.push('ほかに運転する人の免許証（表）の写真を選んでください。'); }
-      if (!files.d2back){ $('tile-d2back').classList.add('err'); errs.push('ほかに運転する人の免許証（裏）の写真を選んでください。'); }
-    }
+    markField('req-start', !!prob); if (prob){ errs.push(prob); keys.push('period'); showCal(true); }
+    ['tile-front','tile-back','tile-d2front','tile-d2back'].forEach(function(id){ var k={'tile-front':'front','tile-back':'back','tile-d2front':'d2front','tile-d2back':'d2back'}[id]; if (files[k] || licLater()) $(id).classList.remove('err'); });
+    if (!licLater()){
+      if (!files.front){ $('tile-front').classList.add('err'); errs.push('運転免許証の表の写真を選んでください（あとで送ることもできます）。'); keys.push('lic'); }
+      if (!files.back){ $('tile-back').classList.add('err'); errs.push('運転免許証の裏の写真を選んでください（あとで送ることもできます）。'); keys.push('lic'); }
+      if ($('d2-on').checked){
+        var bn = !val('d2-name'); markField('d2-name', bn); if (bn){ errs.push('ほかに運転する人のお名前を入力してください。'); keys.push('d2'); }
+        if (!files.d2front){ $('tile-d2front').classList.add('err'); errs.push('ほかに運転する人の免許証（表）の写真を選んでください。'); keys.push('d2'); }
+        if (!files.d2back){ $('tile-d2back').classList.add('err'); errs.push('ほかに運転する人の免許証（裏）の写真を選んでください。'); keys.push('d2'); }
+      }
+    } else { markField('d2-name', false); }
     var dv = $('agree-driver').checked;
     $('agree-driver-row').classList.toggle('invalid', !dv);
-    if (!dv) errs.push('運転する人の条件（21歳以上・免許を取って1年以上）を確認して、チェックを入れてください。');
+    if (!dv){ errs.push('運転する人の条件（21歳以上・免許を取って1年以上）を確認して、チェックを入れてください。'); keys.push('agree'); }
     var t = $('agree-terms').checked, pv = $('agree-privacy').checked;
     $('agree-terms-row').classList.toggle('invalid', !t); $('agree-privacy-row').classList.toggle('invalid', !pv);
-    if (!t) errs.push('貸渡約款への同意にチェックを入れてください。');
-    if (!pv) errs.push('個人情報の取り扱いへの同意にチェックを入れてください。');
-    return { errs: errs, r: r };
+    if (!t){ errs.push('貸渡約款への同意にチェックを入れてください。'); keys.push('agree'); }
+    if (!pv){ errs.push('個人情報の取り扱いへの同意にチェックを入れてください。'); keys.push('agree'); }
+    return { errs: errs, r: r, keys: keys };
+  }
+
+  /* ---------- 申し込みページ：どの欄まで入力して離れたかを数える ----------
+     送るのは「最後にさわった欄の名前」と、そのページを開いているあいだだけの番号。入力した内容は送らない */
+  var FUNNEL_IDS = { 'co-on':'company', 'co-name':'company', 'user-phone':'company', 'user-email':'company', 'req-noc-no':'noc', 'req-noc-yes':'noc', 'req-name':'name', 'req-kana':'kana', 'req-phone':'phone', 'req-email':'email',
+    'req-address':'address', 'req-stay':'stay', 'req-work':'work', 'lic-now':'licwhen', 'lic-later':'licwhen', 'lic-front':'lic', 'lic-back':'lic',
+    'd2-on':'d2', 'd2-name':'d2', 'd2-front':'d2', 'd2-back':'d2', 'req-handover':'place', 'req-handover-time':'place', 'req-return':'place',
+    'req-return-time':'place', 'req-contact':'contact', 'req-note':'note', 'agree-terms':'agree', 'agree-driver':'agree', 'agree-privacy':'agree', 'req-submit':'submit' };
+  var funnel = { sid:'', at:'', sent:false, told:'' };
+  function funnelOn(){
+    if (!CFG.api || location.hostname !== 'cablueie-rentacar.com' || navigator.webdriver) return false;
+    try { if (localStorage.getItem('no-count')) return false; } catch(e){}
+    return true;
+  }
+  function funnelSend(ev, at){
+    if (!funnel.sid || !funnelOn()) return;
+    try { fetch(CFG.api + '?api=hit&ev=' + ev + '&sid=' + funnel.sid + '&at=' + encodeURIComponent(at || ''), { mode:'no-cors', keepalive:true }).catch(function(){}); } catch(e){}
+  }
+  function funnelMark(at){ if (!at) return; if (!funnel.sid) funnel.sid = Math.random().toString(36).slice(2, 10); funnel.at = at; }
+  function initFunnel(){
+    var form = $('req-form');
+    form.addEventListener('focusin', function(ev){ var t = ev.target || {}; funnelMark(FUNNEL_IDS[t.id] || (t.closest && t.closest('#period-field') ? 'period' : '')); });
+    form.addEventListener('change', function(ev){ funnelMark(FUNNEL_IDS[(ev.target || {}).id]); });
+    $('period-field').addEventListener('click', function(){ funnelMark('period'); });
+    function leave(){ if (funnel.sid && !funnel.sent && funnel.at !== funnel.told){ funnel.told = funnel.at; funnelSend('left', funnel.at); } }
+    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') leave(); });
+    window.addEventListener('pagehide', leave);
   }
   function cleanMsg(m){ return String(m || '').replace(/^(Error|Exception|ScriptError):\s*/i, ''); }
 
@@ -689,6 +752,20 @@
     setupUpload('lic-front','front'); setupUpload('lic-back','back');
     setupUpload('d2-front','d2front'); setupUpload('d2-back','d2back');
     $('d2-on').addEventListener('change', function(){ $('d2-area').hidden = !$('d2-on').checked; });
+    function licMode(){ var later = licLater(); $('lic-now-area').hidden = later; $('lic-later-note').hidden = !later; }
+    ['lic-now','lic-later'].forEach(function(id){ $(id).addEventListener('change', licMode); });
+    licMode();
+    /* 会社の担当の方が申し込むときは、欄の名前を変える（お名前＝車を使う方、電話・メール＝担当の方） */
+    function coMode(){
+      var on = $('co-on').checked; $('co-area').hidden = !on;
+      [['req-name','お名前','車を使う方のお名前'],['req-phone','電話番号','担当の方の電話番号'],['req-email','メールアドレス','担当の方のメールアドレス']].forEach(function(x){
+        var lb = document.querySelector('label[for="'+x[0]+'"]');
+        if (lb && lb.firstChild && lb.firstChild.nodeType === 3) lb.firstChild.textContent = on ? x[2] : x[1];
+      });
+    }
+    $('co-on').addEventListener('change', coMode);
+    coMode();
+    initFunnel();
     $('req-contact').addEventListener('change', renderContactChoice);
     renderPause();
     var tried = false, dirty = false;
@@ -704,9 +781,9 @@
       if (state.status === 'pause') return;
       tried = true;
       var v = validate();
-      if (v.errs.length){ showErrors(v.errs); return; }
+      if (v.errs.length){ funnelMark('check:' + (v.keys[0] || 'submit')); showErrors(v.errs); return; }
       showErrors([]);
-      var r = v.r;
+      var r = v.r, later = licLater();
       var payload = {
         website: $('req-website').value,
         start: r.start, end: r.end, noc: r.noc,
@@ -716,9 +793,12 @@
         returnWay: $('req-return').value, returnTime: val('req-return-time'),
         contact: $('req-contact').value, note: val('req-note'),
         agreeTerms: $('agree-terms').checked, agreePrivacy: $('agree-privacy').checked, agreeDriver: $('agree-driver').checked,
-        licenseFront: files.front && { mime: files.front.mime, data: files.front.data },
-        licenseBack: files.back && { mime: files.back.mime, data: files.back.data },
-        driver2: $('d2-on').checked ? { name: val('d2-name'),
+        byCompany: $('co-on').checked,
+        coName: $('co-on').checked ? val('co-name') : '', userPhone: $('co-on').checked ? val('user-phone') : '', userEmail: $('co-on').checked ? val('user-email') : '',
+        licenseLater: later,
+        licenseFront: !later && files.front ? { mime: files.front.mime, data: files.front.data } : null,
+        licenseBack: !later && files.back ? { mime: files.back.mime, data: files.back.data } : null,
+        driver2: (!later && $('d2-on').checked) ? { name: val('d2-name'),
           front: files.d2front && { mime: files.d2front.mime, data: files.d2front.data },
           back: files.d2back && { mime: files.d2back.mime, data: files.d2back.data } } : null
       };
@@ -732,12 +812,22 @@
           if (!res || !res.ok) throw new Error((res && res.error) || '');
           res = res.data || {};
           dirty = false;
+          funnel.sent = true; funnelSend('sent', '');
           $('req-area').hidden = true;
           $('apply-intro').hidden = true;
           $('done-id').textContent = res.id || '';
           $('done-period').textContent = jp(r.s)+' 〜 '+jp(r.e)+'（'+r.label+'）';
           $('done-total').textContent = yen(res.total != null ? res.total : r.total);
           showDoneLine(res.id, payload.contact);
+          if (res.docs && res.docs.r && res.docs.k){
+            /* 免許証の写真を「あとで送る」：写真を送るページへのボタンを出す */
+            var dl = $('done-docs'), dt = $('done-text');
+            dl.href = '../docs/?r=' + encodeURIComponent(res.docs.r) + '&k=' + encodeURIComponent(res.docs.k);
+            dl.hidden = false;
+            dt.textContent = '入力いただいたメールアドレスに、受付確認のメールを送りました。次に、下のボタンから運転免許証の写真（表と裏）を送ってください（メールのリンクからも送れます）。写真とお申し込みの内容を確認したら、お支払いページのリンクをメールでお送りします。お支払いが済んだ時点で、ご予約が確定します。';
+            var sg = document.createElement('strong'); sg.textContent = '写真が届くまで、ご予約は確定しません。';
+            dt.appendChild(document.createTextNode(' ')); dt.appendChild(sg);
+          }
           if (res.pay && res.pay.r && res.pay.k){
             var pay = $('done-pay');
             pay.href = '../pay/?r=' + encodeURIComponent(res.pay.r) + '&n=' + encodeURIComponent(res.pay.n) + '&k=' + encodeURIComponent(res.pay.k);
@@ -752,6 +842,7 @@
         })
         .catch(function(err){
           reset();
+          funnelMark('error');
           showErrors([cleanMsg(err && err.message) || '送信できませんでした。通信状態を確認して、もう一度お試しください。']);
         });
     });
