@@ -4,7 +4,7 @@
   var CFG = window.CABLUEIE_CONFIG || {};
   var $ = function(id){ return document.getElementById(id); };
   var q = new URLSearchParams(location.search);
-  var ids = { r: q.get('r') || '', k: q.get('k') || '' };
+  var ids = { r: q.get('r') || '', k: q.get('k') || '', o: q.get('o') || '' }; /* o：中江さん用の「貸す前の記録」のリンク */
   var FAIL = '通信できませんでした。電波のよい場所で、もう一度お試しください。';
   var SHOTS = [
     { label: '前', title: '車の前から撮ってください', img: '../assets/ho-front.png', hint: '車の正面が全部入るように、2〜3歩はなれて撮ります。' },
@@ -129,7 +129,7 @@
     (body || []).forEach(function(c){ if (c) box.appendChild(c); });
     if (nav) box.appendChild(nav);
     if (at > 0 && !sent) box.appendChild(el('button', { type: 'button', class: 'ho-back', text: '← 前の画面にもどる', onclick: function(){ go(at - 1); } }));
-    box.appendChild(help());
+    if (!info.owner) box.appendChild(help());
     box.hidden = false;
     var h = box.querySelector('h2'); if (h) h.focus({ preventScroll: true });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -185,7 +185,8 @@
   }
   /* 車を上から見た図。タップした場所に印（受け取りは赤い○、返却は青い×）を付ける。位置は図の幅・高さに対する割合で送る */
   function diagram(){
-    var pickup = info.mode === 'pickup';
+    var outMode = info.mode !== 'return';
+    var oldMarks = info.mode === 'return' ? (info.pkMarks || []) : (info.mode === 'pickup' ? (info.preMarks || []) : []);
     var wrap = el('div', { class: 'ho-dia' }), box = el('div', { class: 'ho-dia-in' });
     var img = el('img', { src: '../assets/ho-top.png', alt: '車を上から見た図（上が車の前）', draggable: 'false' });
     box.appendChild(img);
@@ -194,8 +195,8 @@
     function dot(m, cls, ch){ return el('span', { class: 'ho-mk ' + cls, style: 'left:' + (m[0] * 100) + '%;top:' + (m[1] * 100) + '%', text: ch, 'aria-hidden': 'true' }); }
     function draw(){
       Array.prototype.forEach.call(box.querySelectorAll('.ho-mk'), function(n){ n.remove(); });
-      if (!pickup) (info.pkMarks || []).forEach(function(m){ box.appendChild(dot(m, 'old', '○')); });
-      st.marks.forEach(function(m){ box.appendChild(dot(m, pickup ? 'pk' : 'rt', pickup ? '○' : '×')); });
+      oldMarks.forEach(function(m){ box.appendChild(dot(m, 'old', '○')); });
+      st.marks.forEach(function(m){ box.appendChild(dot(m, outMode ? 'pk' : 'rt', outMode ? '○' : '×')); });
       count.textContent = st.marks.length ? '印：' + st.marks.length + 'か所' : 'まだ印はありません';
       undo.disabled = !st.marks.length;
     }
@@ -208,13 +209,16 @@
       draw();
     });
     wrap.append(box, el('div', { class: 'ho-row ho-dia-tools' }, [undo, count]));
-    if (!pickup && (info.pkMarks || []).length) wrap.appendChild(el('p', { class: 'small muted', text: '灰色の○は、受け取りのときからあったキズです。新しいものにだけ印を付けてください。' }));
+    if (oldMarks.length) wrap.appendChild(el('p', { class: 'small muted', text: info.mode === 'return' ? '灰色の○は、受け取りのときからあったキズです。新しいものにだけ印を付けてください。' : '灰色の○は、貸す前に確認したキズです。新しく見つけたものにだけ印を付けてください。' }));
     draw();
     return wrap;
   }
   function stepDamage(){
     var pickup = info.mode === 'pickup', body = [];
-    body.push(lead(pickup ? '車のまわりを1周見て、気になるキズやヘコミはありましたか？' : '借りているあいだに、新しいキズやヘコミはできましたか？'));
+    var preN = (info.preMarks || []).length;
+    body.push(lead(info.mode === 'pre' ? '車のまわりを1周見て、前からあるキズやヘコミはありますか？'
+      : (pickup ? (preN ? '貸す前に確認したキズが' + preN + 'か所あります（「ある」を押すと、図で見られます）。それ以外に、気になるキズやヘコミはありましたか？' : '車のまわりを1周見て、気になるキズやヘコミはありましたか？')
+      : '借りているあいだに、新しいキズやヘコミはできましたか？')));
     if (pickup && st.damage !== true) body.push(el('p', { class: 'small muted', text: '小さなものでも、気になったら写真を撮っておくと、返すときに安心です。' }));
     if (st.damage === true){
       body.push(lead('① 下の図の上で、キズやヘコミのある場所を指でタップしてください（何か所でも）。'));
@@ -267,9 +271,10 @@
       if (!st.fuel) e.push('燃料の目もりを選んでください。');
       if (e.length){ msg.textContent = e.join(' '); msg.hidden = false; return; }
       /* 返すときに、受け取りのときより小さい数字なら、一度だけ確かめてもらう */
-      if (!pickup && info.pkKm && Number(n) < info.pkKm && warned !== n){
+      var ref = info.mode === 'return' ? info.pkKm : (pickup ? info.preKm : 0), refName = info.mode === 'return' ? '受け取りのとき' : '貸す前の記録';
+      if (ref && Number(n) < ref && warned !== n){
         warned = n;
-        msg.textContent = '受け取りのとき（' + Number(info.pkKm).toLocaleString('ja-JP') + ' km）より小さい数字です。メーターをもう一度確かめてください。合っていれば、もう一度「次へ」を押してください。';
+        msg.textContent = refName + '（' + Number(ref).toLocaleString('ja-JP') + ' km）より小さい数字です。メーターをもう一度確かめてください。合っていれば、もう一度「次へ」を押してください。';
         msg.hidden = false; return;
       }
       next();
@@ -406,6 +411,55 @@
     if (when) body.push(el('p', { class: 'small muted', text: '受付：' + when }));
     frame(pickup ? '受け取りました' : '返却を受け付けました', body, null);
   }
+  /* ---------- 貸す前の記録（中江さん用） ---------- */
+  function stepPreStart(){
+    var body = [lead(info.name + ' 様にお渡しする前の、車の状態の記録です（借りる日：' + jp(info.start) + '）。')];
+    body.push(el('ul', { class: 'ho-list' }, [el('li', { text: '車のまわり4方向とメーターの写真' }), el('li', { text: '走った距離の合計（km）と燃料' }), el('li', { text: '前からあるキズの場所（図にタップ）と写真' })]));
+    if (info.pre) body.push(el('div', { class: 'ho-box' }, [
+      el('div', { text: '前に記録した内容（' + info.pre.at + '）' }),
+      el('strong', { text: Number(info.pre.km).toLocaleString('ja-JP') + ' km・燃料 ' + info.pre.fu + ((info.pre.mk || []).length ? '・キズ ' + info.pre.mk.length + 'か所' : '') }),
+      el('div', { class: 'small muted', text: 'もう一度記録すると、新しい内容に置きかわります。' })
+    ]));
+    body.push(lead('お客様の受け取りの画面に、キズの印が灰色で出ます。貸渡証の「発メーター」「発燃料」と車の図にも入ります。'));
+    frame('貸す前の記録', body, el('div', { class: 'ho-btns' }, [btn('始める', 'big', next)]));
+  }
+  function stepPreSend(){
+    var body = [el('div', { class: 'ho-box' }, [
+      el('div', { text: '走った距離：' + Number(digits(st.km)).toLocaleString('ja-JP') + ' km' }),
+      el('div', { text: '燃料：' + st.fuel }),
+      el('div', { text: 'キズ：' + (st.damage ? st.marks.length + 'か所（写真 ' + st.extra.length + '枚）' : 'なし') })
+    ])];
+    var msg = el('p', { class: 'form-error', role: 'alert', hidden: '' });
+    body.push(msg);
+    var send = btn('この内容で記録する', 'big', function(){ submitPre(msg, send); });
+    frame('内容の確認', body, el('div', { class: 'ho-btns' }, [send]));
+  }
+  function submitPre(msg, send){
+    if (busy) return;
+    busy = true; msg.hidden = true;
+    var label = send.textContent;
+    send.disabled = true; send.textContent = '送信しています…（1分ほどかかることがあります）';
+    var data = { r: ids.r, o: ids.o, km: digits(st.km), fuel: st.fuel, marks: st.damage ? st.marks : [],
+      photos: SHOTS.map(function(s, i){ var x = st.shots[i]; return x ? { label: s.label, mime: x.mime, data: x.data } : null; }).filter(Boolean),
+      extra: st.damage ? st.extra.map(function(x){ return { mime: x.mime, data: x.data }; }) : [] };
+    fetch(CFG.api, { method: 'POST', body: JSON.stringify({ action: 'hopre', data: data }) })
+      .then(function(resp){ return resp.json(); })
+      .then(function(res){
+        if (!res || !res.ok) throw new Error((res && res.error) || FAIL);
+        sent = true; busy = false;
+        var when = res.data && res.data.at;
+        steps = [function(){}]; at = 0;
+        frame('記録しました', [
+          lead('貸す前の記録をしました。お客様の受け取りの画面に、キズの印が灰色で出ます。'),
+          lead('貸渡証を作り直して、メールでお送りしました（会って渡すときは、印刷して使えます）。'),
+          when ? el('p', { class: 'small muted', text: '記録：' + when }) : null
+        ], null);
+      })
+      .catch(function(e){
+        busy = false; send.textContent = label; send.disabled = false;
+        msg.textContent = clean(e) + ' 撮った写真は残っているので、もう一度押してください。'; msg.hidden = false;
+      });
+  }
   function stepInfo(title, text){
     steps = [function(){ stepInfo(title, text); }]; at = 0;
     var body = [lead(text)];
@@ -416,6 +470,13 @@
   function start(d){
     info = d;
     $('ho-loading').hidden = true;
+    if (d.mode === 'pre-closed') return stepInfo('受け取りが済んでいます', 'お客様の受け取りの手続きが、もう済んでいます（' + (d.pickedAt || '') + '）。貸す前の記録は、受け取りの前だけできます。');
+    if (d.mode === 'pre'){
+      steps = [stepPreStart];
+      SHOTS.forEach(function(s, i){ steps.push(stepShot(i)); });
+      steps.push(stepMeter, stepDamage, stepPreSend);
+      return go(0);
+    }
     if (d.mode === 'early') return stepInfo('受け取りの手続きは、借りる日からです', '受け取りの手続きは、借りる日（' + jp(d.start) + '）からできます。当日、車に着いたら、このページをもう一度開いてください。鍵の置き場所も、その日に表示されます。');
     if (d.mode === 'done') return stepInfo('手続きは終わっています', '返却の手続きまで終わっています（受付：' + (d.returnedAt || '') + '）。ご利用ありがとうございました。');
     if (d.mode !== 'pickup' && d.mode !== 'return') return stepInfo('今は手続きできません', 'このご予約では、今は受け取り・返却の手続きができません。ご不明な点は、お問い合わせください。');
@@ -431,8 +492,8 @@
   window.addEventListener('beforeunload', function(ev){ if (!sent && st.shots.length){ ev.preventDefault(); ev.returnValue = ''; } });
 
   if (!CFG.api) return fatal('設定を読み込めませんでした。お手数ですが、お問い合わせください。');
-  if (!ids.r || !ids.k) return fatal('ページのリンクが正しくありません。メールに書かれたリンクから開いてください。');
-  fetch(CFG.api + '?' + new URLSearchParams({ api: 'ho', r: ids.r, k: ids.k }).toString())
+  if (!ids.r || (!ids.k && !ids.o)) return fatal('ページのリンクが正しくありません。メールに書かれたリンクから開いてください。');
+  fetch(CFG.api + '?' + new URLSearchParams(ids.o ? { api: 'hopre', r: ids.r, o: ids.o } : { api: 'ho', r: ids.r, k: ids.k }).toString())
     .then(function(resp){ return resp.json(); })
     .then(function(res){ if (!res || !res.ok) throw new Error((res && res.error) || FAIL); start(res.data); })
     .catch(function(e){ fatal(clean(e)); });
