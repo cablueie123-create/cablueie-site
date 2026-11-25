@@ -13,8 +13,9 @@
     { label: '左', title: '車の左側（助手席の側）から撮ってください', img: '../assets/ho-left.png', hint: '前から後ろまで、車の横が全部入るように、はなれて撮ります。' },
     { label: 'メーター', title: 'メーターと燃料の目もりを撮ってください', img: '', hint: 'エンジンをかけてから、走った距離（km）と燃料の目もりが読めるように撮ります。' }
   ];
+  var FUELS = ['空', '1/4', '1/2', '3/4', '満'];
   var info = null, steps = [], at = 0, busy = false, sent = false;
-  var st = { shots: [], extra: [], damage: null, licNo: '', licKind: '', lic2No: '', lic2Kind: '', lic2Addr: '', agree: false, keyBack: false, sig: null };
+  var st = { shots: [], extra: [], damage: null, marks: [], km: '', fuel: '', acc: null, accText: '', licNo: '', licKind: '', lic2No: '', lic2Kind: '', lic2Addr: '', agree: false, keyBack: false, sig: null };
 
   /* ---------- 小さな道具 ---------- */
   function jp(s){ var p = String(s || '').split('-'); return p.length === 3 ? p[0] + '年' + Number(p[1]) + '月' + Number(p[2]) + '日' : ''; }
@@ -139,7 +140,7 @@
 
   function stepWhere(){
     var pickup = info.mode === 'pickup';
-    var body = [lead(pickup ? info.name + ' 様、ご利用ありがとうございます。車の受け取りの手続きをします。3分ほどで終わります。' : info.name + ' 様、ご利用ありがとうございました。車の返却の手続きをします。')];
+    var body = [lead(pickup ? info.name + ' 様、ご利用ありがとうございます。車の受け取りの手続きをします。5分ほどで終わります。' : info.name + ' 様、ご利用ありがとうございました。車の返却の手続きをします。')];
     if (pickup){
       var box = el('div', { class: 'ho-box' }, [el('div', { text: '車の場所' })]);
       if (info.spot) box.appendChild(el('strong', { text: info.spot }));
@@ -182,12 +183,43 @@
       frame(s.title, body, nav);
     };
   }
+  /* 車を上から見た図。タップした場所に印（受け取りは赤い○、返却は青い×）を付ける。位置は図の幅・高さに対する割合で送る */
+  function diagram(){
+    var pickup = info.mode === 'pickup';
+    var wrap = el('div', { class: 'ho-dia' }), box = el('div', { class: 'ho-dia-in' });
+    var img = el('img', { src: '../assets/ho-top.png', alt: '車を上から見た図（上が車の前）', draggable: 'false' });
+    box.appendChild(img);
+    var count = el('span', { class: 'small muted', 'aria-live': 'polite' });
+    var undo = btn('最後の印を消す', 'ghost small', function(){ st.marks.pop(); draw(); });
+    function dot(m, cls, ch){ return el('span', { class: 'ho-mk ' + cls, style: 'left:' + (m[0] * 100) + '%;top:' + (m[1] * 100) + '%', text: ch, 'aria-hidden': 'true' }); }
+    function draw(){
+      Array.prototype.forEach.call(box.querySelectorAll('.ho-mk'), function(n){ n.remove(); });
+      if (!pickup) (info.pkMarks || []).forEach(function(m){ box.appendChild(dot(m, 'old', '○')); });
+      st.marks.forEach(function(m){ box.appendChild(dot(m, pickup ? 'pk' : 'rt', pickup ? '○' : '×')); });
+      count.textContent = st.marks.length ? '印：' + st.marks.length + 'か所' : 'まだ印はありません';
+      undo.disabled = !st.marks.length;
+    }
+    box.addEventListener('click', function(ev){
+      var r = img.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      var x = (ev.clientX - r.left) / r.width, y = (ev.clientY - r.top) / r.height;
+      if (x < 0 || x > 1 || y < 0 || y > 1 || st.marks.length >= 10) return;
+      st.marks.push([Math.round(x * 1000) / 1000, Math.round(y * 1000) / 1000]);
+      draw();
+    });
+    wrap.append(box, el('div', { class: 'ho-row ho-dia-tools' }, [undo, count]));
+    if (!pickup && (info.pkMarks || []).length) wrap.appendChild(el('p', { class: 'small muted', text: '灰色の○は、受け取りのときからあったキズです。新しいものにだけ印を付けてください。' }));
+    draw();
+    return wrap;
+  }
   function stepDamage(){
     var pickup = info.mode === 'pickup', body = [];
     body.push(lead(pickup ? '車のまわりを1周見て、気になるキズやヘコミはありましたか？' : '借りているあいだに、新しいキズやヘコミはできましたか？'));
     if (pickup && st.damage !== true) body.push(el('p', { class: 'small muted', text: '小さなものでも、気になったら写真を撮っておくと、返すときに安心です。' }));
     if (st.damage === true){
-      body.push(lead('キズやヘコミに近づいて、1か所ずつ撮ってください（4枚まで）。'));
+      body.push(lead('① 下の図の上で、キズやヘコミのある場所を指でタップしてください（何か所でも）。'));
+      body.push(diagram());
+      body.push(lead('② キズやヘコミに近づいて、1か所ずつ撮ってください（4枚まで）。'));
       var th = el('div', { class: 'ho-thumbs' });
       st.extra.forEach(function(x, j){ th.appendChild(el('img', { src: x.preview, alt: 'キズの写真' + (j + 1) })); });
       if (st.extra.length) body.push(th);
@@ -196,14 +228,72 @@
       var add = function(cam){ return function(){ pick(cam, function(f){ compress(f).then(function(r){ st.extra.push(r); steps[at](); }, function(){ msg.textContent = 'この写真は読み込めませんでした。もう一度撮ってください。'; msg.hidden = false; }); }); }; };
       var row = [];
       if (st.extra.length < 4) row.push(btn(st.extra.length ? 'もう1枚撮る' : 'キズを撮る', st.extra.length ? 'ghost' : 'big', add(true)));
-      if (st.extra.length) row.unshift(btn('次へ', 'big', next));
-      row.push(btn(pickup ? 'やっぱり気になるキズはない' : 'やっぱりキズはない', 'ghost', function(){ st.damage = false; st.extra = []; next(); }));
+      if (st.extra.length) row.unshift(btn('次へ', 'big', function(){
+        if (!st.marks.length){ msg.textContent = '図の上で、キズのある場所をタップしてください。'; msg.hidden = false; return; }
+        next();
+      }));
+      row.push(btn(pickup ? 'やっぱり気になるキズはない' : 'やっぱりキズはない', 'ghost', function(){ st.damage = false; st.extra = []; st.marks = []; next(); }));
       frame('キズ・ヘコミ', body, el('div', { class: 'ho-btns' }, row));
       return;
     }
     frame('キズ・ヘコミ', body, el('div', { class: 'ho-btns' }, [
-      btn('ない', 'big', function(){ st.damage = false; st.extra = []; next(); }),
-      btn('ある（写真を撮る）', 'ghost', function(){ st.damage = true; steps[at](); })
+      btn('ない', 'big', function(){ st.damage = false; st.extra = []; st.marks = []; next(); }),
+      btn('ある（場所と写真）', 'ghost', function(){ st.damage = true; steps[at](); })
+    ]));
+  }
+  /* メーターの数字（km）と燃料の目もり。撮ったメーターの写真を見ながら入れる（貸渡証に書く） */
+  function stepMeter(){
+    var pickup = info.mode === 'pickup', body = [], have = st.shots[4], warned = '';
+    if (have) body.push(el('div', { class: 'ho-shot' }, [el('img', { src: have.preview, alt: 'メーターの写真' })]));
+    body.push(lead('いま撮ったメーターの写真を見て、走った距離の合計（km）と、燃料の目もりを入れてください。貸渡証に書きます。'));
+    var km = el('input', { id: 'ho-km', type: 'text', inputmode: 'numeric', autocomplete: 'off', maxlength: '9', placeholder: '例：45120', value: st.km || '' });
+    km.addEventListener('input', function(){ st.km = km.value; });
+    body.push(el('div', { class: 'ho-field' }, [el('label', { for: 'ho-km', text: '走った距離の合計（km）' }), km]));
+    var fu = el('div', { class: 'ho-fuel', role: 'group', 'aria-label': '燃料の目もり' });
+    FUELS.forEach(function(f){
+      var b = el('button', { type: 'button', class: 'ho-fu' + (st.fuel === f ? ' on' : ''), 'aria-pressed': String(st.fuel === f), text: f });
+      b.addEventListener('click', function(){
+        st.fuel = f;
+        Array.prototype.forEach.call(fu.children, function(c){ var on = c === b; c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); });
+      });
+      fu.appendChild(b);
+    });
+    body.push(el('div', { class: 'ho-field' }, [el('span', { text: '燃料の目もり（いちばん近いもの）', style: 'font-weight:700' }), fu]));
+    var msg = el('p', { class: 'form-error', role: 'alert', hidden: '' });
+    body.push(msg);
+    frame('メーターの数字と燃料', body, el('div', { class: 'ho-btns' }, [btn('次へ', 'big', function(){
+      var n = digits(st.km), e = [];
+      if (!n || n.length > 7) e.push('走った距離の合計（km）を、数字で入れてください。');
+      if (!st.fuel) e.push('燃料の目もりを選んでください。');
+      if (e.length){ msg.textContent = e.join(' '); msg.hidden = false; return; }
+      /* 返すときに、受け取りのときより小さい数字なら、一度だけ確かめてもらう */
+      if (!pickup && info.pkKm && Number(n) < info.pkKm && warned !== n){
+        warned = n;
+        msg.textContent = '受け取りのとき（' + Number(info.pkKm).toLocaleString('ja-JP') + ' km）より小さい数字です。メーターをもう一度確かめてください。合っていれば、もう一度「次へ」を押してください。';
+        msg.hidden = false; return;
+      }
+      next();
+    })]));
+  }
+  /* 返すとき：借りているあいだの事故や故障（貸渡証の「事故・故障」に書く） */
+  function stepAccident(){
+    var body = [lead('借りているあいだに、事故や故障はありましたか？')];
+    if (st.acc === true){
+      var ta = el('textarea', { id: 'ho-acc', rows: '3', maxlength: '200', placeholder: '例：12月20日、駐車場で後ろを軽くこすった' });
+      ta.value = st.accText || '';
+      ta.addEventListener('input', function(){ st.accText = ta.value; });
+      body.push(el('div', { class: 'ho-field' }, [el('label', { for: 'ho-acc', text: 'いつ・どんなことがあったか' }), ta]));
+      var msg = el('p', { class: 'form-error', role: 'alert', hidden: '' });
+      body.push(msg);
+      frame('事故・故障', body, el('div', { class: 'ho-btns' }, [
+        btn('次へ', 'big', function(){ if (!String(st.accText || '').trim()){ msg.textContent = 'いつ・どんなことがあったかを書いてください。'; msg.hidden = false; return; } next(); }),
+        btn('やっぱりなかった', 'ghost', function(){ st.acc = false; st.accText = ''; next(); })
+      ]));
+      return;
+    }
+    frame('事故・故障', body, el('div', { class: 'ho-btns' }, [
+      btn('なかった', 'big', function(){ st.acc = false; st.accText = ''; next(); }),
+      btn('あった', 'ghost', function(){ st.acc = true; steps[at](); })
     ]));
   }
   function licField(id, label, value, onInput){
@@ -286,7 +376,9 @@
       /* 写真には名前（前・右…メーター）を付けて送る。受け取りはメーターだけ */
       photos: SHOTS.map(function(s, i){ var x = st.shots[i]; return x ? { label: s.label, mime: x.mime, data: x.data } : null; }).filter(Boolean),
       extra: st.damage ? st.extra.map(function(x){ return { mime: x.mime, data: x.data }; }) : [],
+      marks: st.damage ? st.marks : [], km: digits(st.km), fuel: st.fuel,
       sig: pad.png() };
+    if (info.mode === 'return'){ data.acc = st.acc ? 'yes' : 'no'; data.accText = st.acc ? String(st.accText || '').trim() : ''; }
     if (info.mode === 'pickup'){ data.licNo = digits(st.licNo); data.licKind = st.licKind; data.lic2No = digits(st.lic2No); data.lic2Kind = st.lic2Kind; data.lic2Addr = String(st.lic2Addr || '').trim(); }
     fetch(CFG.api, { method: 'POST', body: JSON.stringify({ action: 'ho', data: data }) })
       .then(function(resp){ return resp.json(); })
@@ -328,11 +420,11 @@
     if (d.mode === 'done') return stepInfo('手続きは終わっています', '返却の手続きまで終わっています（受付：' + (d.returnedAt || '') + '）。ご利用ありがとうございました。');
     if (d.mode !== 'pickup' && d.mode !== 'return') return stepInfo('今は手続きできません', 'このご予約では、今は受け取り・返却の手続きができません。ご不明な点は、お問い合わせください。');
     /* 受け取り：まわりは見るだけ（車を置いたときの写真は当方で撮る）→ 気になるキズだけ撮る → メーター。返却：まわり4枚とメーター */
-    if (d.mode === 'pickup') steps = [stepWhere, stepKey, stepDamage, stepShot(4), stepLicense, stepSign];
+    if (d.mode === 'pickup') steps = [stepWhere, stepKey, stepDamage, stepShot(4), stepMeter, stepLicense, stepSign];
     else {
       steps = [stepWhere];
       SHOTS.forEach(function(s, i){ steps.push(stepShot(i)); });
-      steps.push(stepDamage, stepSign);
+      steps.push(stepMeter, stepDamage, stepAccident, stepSign);
     }
     go(0);
   }
