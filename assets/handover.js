@@ -15,6 +15,7 @@
   ];
   var FUELS = ['空', '1/4', '1/2', '3/4', '満'];
   var info = null, steps = [], at = 0, busy = false, sent = false;
+  var keepNav = false; /* 写真を撮って同じ画面を描き直すときは、一番上に戻さず「次へ」のボタンが見える位置にする */
   var st = { shots: [], extra: [], damage: null, marks: [], km: '', fuel: '', acc: null, accText: '', licNo: '', licKind: '', lic2No: '', lic2Kind: '', lic2Addr: '', agree: false, keyBack: false, sig: null };
 
   /* ---------- 小さな道具 ---------- */
@@ -132,7 +133,8 @@
     if (!info.owner) box.appendChild(help());
     box.hidden = false;
     var h = box.querySelector('h2'); if (h) h.focus({ preventScroll: true });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (keepNav && nav){ keepNav = false; setTimeout(function(){ nav.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, 60); }
+    else { keepNav = false; window.scrollTo({ top: 0, behavior: 'smooth' }); }
   }
   function go(i){ at = Math.max(0, Math.min(steps.length - 1, i)); steps[at](); }
   function next(){ go(at + 1); }
@@ -173,7 +175,7 @@
       body.push(msg);
       function got(f){
         msg.hidden = true; area.textContent = ''; area.appendChild(lead('写真を読み込んでいます…'));
-        compress(f).then(function(r){ st.shots[i] = r; steps[at](); }, function(){
+        compress(f).then(function(r){ st.shots[i] = r; keepNav = true; steps[at](); }, function(){
           area.textContent = ''; msg.textContent = 'この写真は読み込めませんでした。もう一度撮ってください。'; msg.hidden = false;
         });
       }
@@ -229,7 +231,7 @@
       if (st.extra.length) body.push(th);
       var msg = el('p', { class: 'form-error', role: 'alert', hidden: '' });
       body.push(msg);
-      var add = function(cam){ return function(){ pick(cam, function(f){ compress(f).then(function(r){ st.extra.push(r); steps[at](); }, function(){ msg.textContent = 'この写真は読み込めませんでした。もう一度撮ってください。'; msg.hidden = false; }); }); }; };
+      var add = function(cam){ return function(){ pick(cam, function(f){ compress(f).then(function(r){ st.extra.push(r); keepNav = true; steps[at](); }, function(){ msg.textContent = 'この写真は読み込めませんでした。もう一度撮ってください。'; msg.hidden = false; }); }); }; };
       var row = [];
       if (st.extra.length < 4) row.push(btn(st.extra.length ? 'もう1枚撮る' : 'キズを撮る', st.extra.length ? 'ghost' : 'big', add(true)));
       if (st.extra.length) row.unshift(btn('次へ', 'big', function(){
