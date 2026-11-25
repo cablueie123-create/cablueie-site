@@ -635,3 +635,4 @@ p,li,dd{text-wrap:pretty}
 .sum-k{font-weight:700;font-size:.92rem}
 .sum-bar strong{font-family:var(--font-display);font-size:1.5rem;font-weight:800;font-variant-numeric:tabular-nums}
 .sum-bar.warn{background:var(--warn-soft)}
+.co-area{display:grid;gap:12px;padding:12px 14px;border-radius:12px;background:var(--sunk);min-width:0}

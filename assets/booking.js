@@ -679,6 +679,12 @@
     var need = [['req-name','お名前','name'],['req-kana','フリガナ','kana'],['req-phone','電話番号','phone'],['req-email','メールアドレス','email'],['req-address','住所','address']];
     need.forEach(function(n){ var bad = !val(n[0]); markField(n[0], bad); if (bad){ errs.push(n[1]+'を入力してください。'); keys.push(n[2]); } });
     markField('req-work', false);
+    /* 会社（勤務先）の担当の方が代わりに申し込むとき：車を使う方の携帯・メール（受け取りのご案内と貸渡証の送り先） */
+    if ($('co-on').checked){
+      var cn = !val('co-name'); markField('co-name', cn); if (cn){ errs.push('担当の方の会社名・お名前を入力してください。'); keys.push('company'); }
+      var up = val('user-phone').replace(/[^0-9]/g, ''); markField('user-phone', up.length < 10); if (up.length < 10){ errs.push('車を使う方の携帯番号を確認してください。'); keys.push('company'); }
+      var ue = val('user-email'), ueBad = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ue); markField('user-email', ueBad); if (ueBad){ errs.push(ue ? '車を使う方のメールアドレスの形を確認してください。' : '車を使う方のメールアドレスを入力してください。'); keys.push('company'); }
+    } else { ['co-name','user-phone','user-email'].forEach(function(id){ markField(id, false); }); }
     var em = val('req-email');
     if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){ markField('req-email', true); errs.push('メールアドレスの形を確認してください。'); keys.push('email'); }
     var ph = val('req-phone').replace(/[^0-9]/g, '');
@@ -707,7 +713,7 @@
 
   /* ---------- 申し込みページ：どの欄まで入力して離れたかを数える ----------
      送るのは「最後にさわった欄の名前」と、そのページを開いているあいだだけの番号。入力した内容は送らない */
-  var FUNNEL_IDS = { 'req-noc-no':'noc', 'req-noc-yes':'noc', 'req-name':'name', 'req-kana':'kana', 'req-phone':'phone', 'req-email':'email',
+  var FUNNEL_IDS = { 'co-on':'company', 'co-name':'company', 'user-phone':'company', 'user-email':'company', 'req-noc-no':'noc', 'req-noc-yes':'noc', 'req-name':'name', 'req-kana':'kana', 'req-phone':'phone', 'req-email':'email',
     'req-address':'address', 'req-stay':'stay', 'req-work':'work', 'lic-now':'licwhen', 'lic-later':'licwhen', 'lic-front':'lic', 'lic-back':'lic',
     'd2-on':'d2', 'd2-name':'d2', 'd2-front':'d2', 'd2-back':'d2', 'req-handover':'place', 'req-handover-time':'place', 'req-return':'place',
     'req-return-time':'place', 'req-contact':'contact', 'req-note':'note', 'agree-terms':'agree', 'agree-driver':'agree', 'agree-privacy':'agree', 'req-submit':'submit' };
@@ -749,6 +755,16 @@
     function licMode(){ var later = licLater(); $('lic-now-area').hidden = later; $('lic-later-note').hidden = !later; }
     ['lic-now','lic-later'].forEach(function(id){ $(id).addEventListener('change', licMode); });
     licMode();
+    /* 会社の担当の方が申し込むときは、欄の名前を変える（お名前＝車を使う方、電話・メール＝担当の方） */
+    function coMode(){
+      var on = $('co-on').checked; $('co-area').hidden = !on;
+      [['req-name','お名前','車を使う方のお名前'],['req-phone','電話番号','担当の方の電話番号'],['req-email','メールアドレス','担当の方のメールアドレス']].forEach(function(x){
+        var lb = document.querySelector('label[for="'+x[0]+'"]');
+        if (lb && lb.firstChild && lb.firstChild.nodeType === 3) lb.firstChild.textContent = on ? x[2] : x[1];
+      });
+    }
+    $('co-on').addEventListener('change', coMode);
+    coMode();
     initFunnel();
     $('req-contact').addEventListener('change', renderContactChoice);
     renderPause();
@@ -777,6 +793,8 @@
         returnWay: $('req-return').value, returnTime: val('req-return-time'),
         contact: $('req-contact').value, note: val('req-note'),
         agreeTerms: $('agree-terms').checked, agreePrivacy: $('agree-privacy').checked, agreeDriver: $('agree-driver').checked,
+        byCompany: $('co-on').checked,
+        coName: $('co-on').checked ? val('co-name') : '', userPhone: $('co-on').checked ? val('user-phone') : '', userEmail: $('co-on').checked ? val('user-email') : '',
         licenseLater: later,
         licenseFront: !later && files.front ? { mime: files.front.mime, data: files.front.data } : null,
         licenseBack: !later && files.back ? { mime: files.back.mime, data: files.back.data } : null,
