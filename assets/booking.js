@@ -18,7 +18,7 @@
     bookings: Array.isArray(B.blocks) ? B.blocks : [],
     today: B.today || null,
     openFrom: '',
-    autoPay: false,
+    autoPay: true, /* 読み込む前の表示。裏方から届いたもので上書きする */
     loaded: false
   };
   function applyBoot(D){
