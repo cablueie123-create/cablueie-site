@@ -623,3 +623,15 @@ p,li,dd{text-wrap:pretty}
 @media (min-width:421px){ .apply-page .two:has(select){grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)} }
 @media (max-width:760px){ .apply-page .estimate{order:-1} }
 @media (max-width:400px){ .rs-v{white-space:normal} }
+/* apply page: 2026-11-25 お金がかからないこと・先に聞ける連絡先・送信ボタンの上の合計・免許証あとで */
+.free-line{display:grid;gap:2px;padding:12px 14px;border-radius:12px;background:var(--ok-soft);font-size:.95rem;line-height:1.6}
+.free-line strong{font-size:1.02rem}
+.ask-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.ask-btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn.line{background:#048A3A;border-color:#048A3A;color:#fff}
+.lic-now{display:grid;gap:12px;min-width:0}
+.sum-bar{display:grid;gap:2px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--sunk)}
+.sum-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.sum-k{font-weight:700;font-size:.92rem}
+.sum-bar strong{font-family:var(--font-display);font-size:1.5rem;font-weight:800;font-variant-numeric:tabular-nums}
+.sum-bar.warn{background:var(--warn-soft)}
