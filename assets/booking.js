@@ -5,7 +5,7 @@
   var CFG = window.CABLUEIE_CONFIG || {};
   var touched = false;
   var state = {
-    status: B.status || 'pre',
+    status: B.status || 'open', /* 読み込む前の表示。受付状態は裏方から届いたもので上書きする */
     prices: { monthly: Number(B.monthly) || 40000, nocMonth: Number(B.nocMonth) || 1500,
               summer: Number(B.summer) || 45000,
               daily: Number(B.daily) || 3500, dailySummer: Number(B.dailySummer) || 4000,
@@ -18,7 +18,7 @@
     bookings: Array.isArray(B.blocks) ? B.blocks : [],
     today: B.today || null,
     openFrom: '',
-    autoPay: false,
+    autoPay: true, /* 読み込む前の表示。裏方から届いたもので上書きする */
     loaded: false
   };
   function applyBoot(D){
@@ -107,9 +107,9 @@
 
   /* ---------- rendering ---------- */
   var $ = function(id){ return document.getElementById(id); };
-  var STATUS_TEXT = {pre:'開業準備中・仮予約受付中', open:'予約受付中', pause:'新規受付を一時停止中'};
+  var STATUS_TEXT = {pre:'仮予約受付中', open:'予約受付中', pause:'新規受付を一時停止中'};
   var STATUS_NOTE = {
-    pre:'現在は開業準備中のため、仮予約として受け付けています。営業開始のご連絡と一緒に予約を確定します。',
+    pre:'現在は仮予約として受け付けています。予約の確定は、こちらからご連絡します。',
     open:'',
     pause:'現在、新しい申し込みの受付を止めています。空き状況の確認とお問い合わせはできます。'
   };
@@ -267,7 +267,6 @@
         head.textContent='最短 '+jpw(nf)+' から '+run+'日間 空いています'+(run>=state.short.min && shortOpen(nf) ? '（短期で借りられます）' : '')+'。';
       }
     }
-    if (state.loaded && nf && openDay > today) head.textContent += '（開業の予定日です。前後することがあります）';
     $('avail-updated').textContent = state.updatedAt ? ('（'+jp(parse(state.updatedAt))+' 時点）') : '';
 
     var list=$('booked-list'); list.textContent='';

@@ -22,12 +22,6 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800;900&amp;family=Montserrat:wght@800&amp;family=Zen+Maru+Gothic:wght@500;700;900&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
 <link rel="stylesheet" href="assets/site.css?v=20261101">
 <style>
-/* 12月からの仮予約のお知らせ。仮予約の受付中（status-pill が pre）だけ出す。終わったら、この style と .dec-notice を消す */
-.dec-notice{margin-top:12px;max-width:34em;padding:12px 16px;border-radius:12px;background:rgba(255,255,255,.92);border:1px solid rgba(10,123,163,.22);box-shadow:var(--shadow)}
-.dec-h{font-weight:700;line-height:1.5;color:var(--hero-ink)}
-.dec-s{margin-top:4px;font-size:.86rem;line-height:1.6;color:var(--hero-sub)}
-.dec-a{display:inline-block;margin-top:6px;font-size:.9rem;font-weight:700}
-#site:has(#status-pill:not([data-status="pre"])) .dec-notice{display:none}
 </style>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebSite", "@id": "https://cablueie-rentacar.com/#website", "url": "https://cablueie-rentacar.com/", "name": "島ぐらしレンタカー", "alternateName": ["しまぐらしレンタカー", "Cablueieレンタカー", "カブリエレンタカー"], "inLanguage": "ja", "publisher": {"@id": "https://cablueie-rentacar.com/#business"}}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "AutoRental", "name": "島ぐらしレンタカー", "alternateName": ["しまぐらしレンタカー", "Cablueieレンタカー", "カブリエレンタカー"], "description": "奄美大島のマンスリーレンタカー（月極・長期レンタカー）。1ヶ月から、延長は1日単位。保険・免責補償込みで月40,000円から。奄美空港・名瀬で受け渡し。看護師・出張・転勤など、お仕事や長期滞在に。サイトで予約と支払いまでできます。", "url": "https://cablueie-rentacar.com/", "image": "https://cablueie-rentacar.com/og.png", "logo": "https://cablueie-rentacar.com/assets/mark-480.png", "address": {"@type": "PostalAddress", "postalCode": "894-0062", "addressRegion": "鹿児島県", "addressLocality": "奄美市", "streetAddress": "名瀬有屋町", "addressCountry": "JP"}, "areaServed": {"@type": "Place", "name": "奄美大島"}, "priceRange": "月額40,000円〜45,000円", "paymentAccepted": "クレジットカード, 電子決済, 銀行振込", "currenciesAccepted": "JPY", "@id": "https://cablueie-rentacar.com/#business", "knowsLanguage": "ja", "makesOffer": [{"@type": "Offer", "name": "マンスリーレンタカー（通常シーズン 10〜5月）", "description": "軽自動車・保険と免責補償込み", "priceCurrency": "JPY", "price": "40000", "availability": "https://schema.org/InStock", "priceSpecification": {"@type": "UnitPriceSpecification", "price": 40000, "priceCurrency": "JPY", "unitText": "月", "unitCode": "MON"}}, {"@type": "Offer", "name": "マンスリーレンタカー（夏シーズン 6〜9月）", "description": "軽自動車・保険と免責補償込み", "priceCurrency": "JPY", "price": "45000", "availability": "https://schema.org/InStock", "priceSpecification": {"@type": "UnitPriceSpecification", "price": 45000, "priceCurrency": "JPY", "unitText": "月", "unitCode": "MON"}}]}</script>
@@ -45,12 +39,7 @@
       </div>
       <h1><span class="h1-sub"><span class="nb">奄美大島の</span><span class="nb">マンスリーレンタカー</span><span class="nb">（月極・長期）</span></span><span class="nb">島に着いたその日から、</span><span class="nb">自分の車がある暮らし。</span></h1>
       <p class="lead">奄美大島でのお仕事や長期滞在に。1ヶ月から借りられるマンスリーレンタカーです。保険と免責補償は、月額料金に含まれています。</p>
-      <p style="margin-top:16px"><span class="pill" id="status-pill" data-status="pre">開業準備中・仮予約受付中</span></p>
-      <div class="dec-notice">
-        <p class="dec-h"><span class="nb">12月からのご利用分、</span><span class="nb">仮予約を受け付けています</span></p>
-        <p class="dec-s"><span class="nb">月<span data-price="monthly">40,000</span>円（通常シーズン）・</span><span class="nb">保険と免責補償込み・</span><span class="nb">1ヶ月から最長6ヶ月まで</span></p>
-        <a class="dec-a" href="apply/">申し込みのページへ</a><a class="dec-a" href="work/" style="margin-left:16px">お仕事で来島する方へ</a>
-      </div>
+      <p style="margin-top:16px"><span class="pill" id="status-pill" data-status="open">予約受付中</span></p>
     </div>
     <div class="price-card">
       <span class="eyebrow">月額料金</span>
@@ -377,7 +366,7 @@
       <li><strong>料金を支払う</strong><span>メールで届くお支払いページから</span></li>
       <li><strong>予約が確定</strong><span>お支払いが済んだ時点で確定します</span></li>
     </ol>
-    <div class="notice info" id="status-note">現在は開業準備中のため、仮予約として受け付けています。営業開始のご連絡と一緒に予約を確定します。</div>
+    <div class="notice info" id="status-note" hidden></div>
     <div class="req" id="req-area">
       <div class="apply" id="quote">
         <div class="group" role="group" aria-labelledby="g1">
@@ -557,7 +546,7 @@
 </div>
 </div>
 <script src="config.js"></script>
-<script src="assets/booking.js?v=20261101"></script>
+<script src="assets/booking.js?v=20261126"></script>
 <script src="assets/quote.js?v=20261121"></script>
 <script src="assets/hit.js?v=20261101"></script>
 <script>
