@@ -234,10 +234,10 @@
     var today=todayStr(), openDay=firstDay(); var t=parse(today);
     var y=t.getUTCFullYear(), m=t.getUTCMonth();
     var frag=document.createDocumentFragment();
-    /* 上に日付の目盛り（1日・10日・20日・30日）。2026-11-26 社長：グラフが見にくい */
+    /* 上に日付の目盛り（1・10・20・30）。2026-11-26 社長：グラフが見にくい */
     var tk=document.createElement('div'); tk.className='mrow ticks'; tk.setAttribute('aria-hidden','true');
     var tl=document.createElement('div'); tl.className='mlabel'; var td=document.createElement('div'); td.className='days';
-    [1,10,20,30].forEach(function(n){ var sp=document.createElement('span'); sp.textContent=n+'日'; sp.style.gridColumn=String(n); td.appendChild(sp); });
+    [1,10,20,30].forEach(function(n){ var sp=document.createElement('span'); sp.textContent=String(n); sp.style.gridColumn=String(n); td.appendChild(sp); });
     tk.append(tl,td); frag.appendChild(tk);
     for (var i=0;i<12;i++){
       var first=new Date(Date.UTC(y,m+i,1));

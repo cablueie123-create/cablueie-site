@@ -133,7 +133,7 @@ section{display:grid;gap:20px;min-width:0}
 .d.booked{background:var(--sea)}
 .d.hold{background:var(--hold)}
 .ticks .days{align-items:end}
-.ticks .days span{font-size:.62rem;line-height:1;color:var(--muted);white-space:nowrap}
+.ticks .days span{font-family:var(--font-data);font-size:.68rem;line-height:1;color:var(--muted);white-space:nowrap} /* 数字は月の表示と同じ書体 */
 .d.past{opacity:.3}
 .d.today{outline:1.5px solid var(--ink);outline-offset:1px}
 .d.pick{background:var(--pick)}
