@@ -700,6 +700,11 @@
         if (!files.d2back){ $('tile-d2back').classList.add('err'); errs.push('ほかに運転する人の免許証（裏）の写真を選んでください。'); keys.push('d2'); }
       }
     } else { markField('d2-name', false); }
+    /* 奄美空港で受け渡すときは、便と時刻が必須（未定でもよい）。2026-11-26 オーナー */
+    [['req-handover','req-handover-time','到着'],['req-return','req-return-time','出発']].forEach(function(x){
+      var bad = $(x[0]).value === 'airport' && !val(x[1]); markField(x[1], bad);
+      if (bad){ errs.push('奄美空港での受け渡しは、'+x[2]+'の便の時刻を入力してください。まだ決まっていなければ「未定」と入力してください。'); keys.push('place'); }
+    });
     var dv = $('agree-driver').checked;
     $('agree-driver-row').classList.toggle('invalid', !dv);
     if (!dv){ errs.push('運転する人の条件（21歳以上・免許を取って1年以上）を確認して、チェックを入れてください。'); keys.push('agree'); }
@@ -764,6 +769,17 @@
     }
     $('co-on').addEventListener('change', coMode);
     coMode();
+    /* 奄美空港を選んだら、時刻の欄を「便と時刻」に変える */
+    function flightMode(){
+      [['req-handover','req-handover-time','受け取りの希望日時（任意）','例：初日の18時ごろ','到着便の時刻（未定も可）','例：12:30着'],
+       ['req-return','req-return-time','返却の希望日時（任意）','例：最終日の17時ごろ','出発便の時刻（未定も可）','例：13:30発']].forEach(function(x){
+        var air = $(x[0]).value === 'airport', lb = document.querySelector('label[for="'+x[1]+'"]');
+        if (lb) lb.textContent = air ? x[4] : x[2];
+        $(x[1]).placeholder = air ? x[5] : x[3];
+      });
+    }
+    ['req-handover','req-return'].forEach(function(id){ $(id).addEventListener('change', flightMode); });
+    flightMode();
     initFunnel();
     $('req-contact').addEventListener('change', renderContactChoice);
     renderPause();
