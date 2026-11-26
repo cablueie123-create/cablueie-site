@@ -128,8 +128,8 @@ section{display:grid;gap:20px;min-width:0}
 .mlabel{font-family:var(--font-data);font-size:.76rem;color:var(--muted);white-space:nowrap}
 .mlabel b{color:var(--ink);font-weight:500}
 .days{display:grid;grid-template-columns:repeat(31,minmax(0,1fr));gap:2px}
-/* 点は、ラベルと余白をつめた分だけ大きくする（PCでは16pxまで） */
-.d{aspect-ratio:1;max-width:16px;border-radius:50%;background:var(--sunk)}
+/* 点は、ラベルと余白をつめた分だけ大きくする（PCでは11pxまで） */
+.d{aspect-ratio:1;max-width:11px;border-radius:50%;background:var(--sunk)}
 .d.booked{background:var(--sea)}
 .d.hold{background:var(--hold)}
 .ticks .days{align-items:end}

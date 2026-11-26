@@ -55,7 +55,8 @@
   var open = el('button', { type: 'button', class: 'btn ghost small q-open', hidden: '' }, ['見積書を作る（会社に出すとき・PDF）']);
   hint.after(open);
 
-  function update(){ open.hidden = !ready(); }
+  /* 値が変わるときだけ書き換える（同じ値でも書くと、下の見張りがまた動いて止まらなくなり、ページが固まる） */
+  function update(){ var h = !ready(); if (open.hidden !== h) open.hidden = h; }
   new MutationObserver(update).observe(est, { subtree: true, childList: true, characterData: true, attributes: true });
   update();
 
