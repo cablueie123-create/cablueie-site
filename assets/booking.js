@@ -229,30 +229,45 @@
       var li3=document.createElement('li'); li3.textContent='連絡先は準備中です。もうしばらくお待ちください。'; ul.appendChild(li3);
     }
   }
+  /* 借りられる空きの日。受付前の日と、1ヶ月にも短期の条件にも足りない短い空きは「借りられない日」にする（2026-11-26 オーナー：グラフが見にくい） */
+  function freeDays(){
+    var ok={}, t=parse(firstDay()), i=0;
+    while (i<400){
+      if (kindAt(ymd(addDays(t,i)))){ i++; continue; }
+      var s=addDays(t,i), run=0; while (i+run<400 && !kindAt(ymd(addDays(t,i+run)))) run++;
+      var good = i+run>=400 || periodEnd(s,1).getTime() <= addDays(s,run-1).getTime() || (run>=state.short.min && shortOpen(s));
+      if (good) for (var j=0;j<run;j++) ok[ymd(addDays(t,i+j))]=true;
+      i+=run;
+    }
+    return ok;
+  }
   function renderYear(){
     var wrap=$('year'); if (!wrap) return; wrap.textContent='';
-    var today=todayStr(), openDay=firstDay(); var t=parse(today);
+    var today=todayStr(), free=state.loaded ? freeDays() : {}; var t=parse(today); // 読み込むまでは、すべて空きに見せない
     var y=t.getUTCFullYear(), m=t.getUTCMonth();
     var frag=document.createDocumentFragment();
     for (var i=0;i<12;i++){
-      var first=new Date(Date.UTC(y,m+i,1));
-      var dim=new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth()+1,0)).getUTCDate();
+      var first=new Date(Date.UTC(y,m+i,1)), fy=first.getUTCFullYear(), fm=first.getUTCMonth()+1;
+      var dim=new Date(Date.UTC(fy,fm,0)).getUTCDate();
       var row=document.createElement('div'); row.className='mrow';
       var lab=document.createElement('div'); lab.className='mlabel';
-      lab.innerHTML = first.getUTCFullYear()+'.<b>'+pad(first.getUTCMonth()+1)+'</b>';
+      lab.innerHTML = (i===0 || fm===1 ? '<small>'+fy+'年</small>' : '')+fm+'月';
       var days=document.createElement('div'); days.className='days';
-      var bookedN=0;
+      /* 同じ色が続く日は1本の帯にまとめる（1日ずつ並べると、すき間の線が出る） */
+      var fr=[], runs=[];
       for (var d=1; d<=dim; d++){
-        var s=first.getUTCFullYear()+'-'+pad(first.getUTCMonth()+1)+'-'+pad(d);
-        var c=document.createElement('span'); c.className='d';
-        var k=kindAt(s); if(k){ c.classList.add(k); bookedN++; }
-        if (s<openDay) c.classList.add('past');
-        if (s===today) c.classList.add('today');
-        if (sel.start && s>=sel.start && s<=sel.end) c.classList.add('pick');
-        days.appendChild(c);
+        var s=fy+'-'+pad(fm)+'-'+pad(d), k=(free[s]?' free':'')+(sel.start && s>=sel.start && s<=sel.end ? ' pick' : '');
+        if (free[s]) fr.push(d);
+        var last=runs[runs.length-1]; if (last && last.k===k) last.n++; else runs.push({ k:k, n:1 });
       }
-      row.setAttribute('aria-label', first.getUTCFullYear()+'年'+(first.getUTCMonth()+1)+'月：'+(bookedN? bookedN+'日予約あり':'すべて空き'));
-      row.append(lab,days); frag.appendChild(row);
+      runs.forEach(function(r, j){
+        var c=document.createElement('span'); c.className='d'+r.k+(j ? ' cut' : ''); c.style.gridColumn='span '+r.n; days.appendChild(c);
+      });
+      /* 色だけに頼らず、月ごとの空きを文字でも書く */
+      var n=fr.length, st = !state.loaded ? '' : !n ? '空きなし' : n===dim ? '空き' : (fr[n-1]===dim && n===dim-fr[0]+1) ? fr[0]+'日から空き' : (fr[0]===1 && n===fr[n-1]) ? fr[n-1]+'日まで空き' : '一部空き';
+      var stat=document.createElement('div'); stat.className='mstat'+(n ? ' ok' : ''); stat.textContent=st;
+      row.setAttribute('aria-label', fy+'年'+fm+'月：'+st);
+      row.append(lab,days,stat); frag.appendChild(row);
     }
     wrap.appendChild(frag);
 
