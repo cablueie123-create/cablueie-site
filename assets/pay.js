@@ -35,6 +35,7 @@
     show('pay-loading', false); show('pay-result', false); show('pay-bill', true);
     show('pay-wait', false); show('switch-confirm', false);
     renderGuard(b);
+    show('pay-invoice', !!b.invoice); show('inv-form', false); $('btn-inv-open').hidden = false;
     $('bill-amount').textContent = yen(b.amount);
     $('bill-name').textContent = (b.name || '') + ' 様';
     $('bill-id').textContent = b.id + (b.extra ? (/延長/.test(b.label) ? '（延長分）' : (/受け渡し料/.test(b.label) ? '（受け渡し料）' : '（返却後の精算）')) : (b.kai > 1 ? '（' + b.kai + '回目）' : ''));
@@ -90,6 +91,22 @@
         error(err.message);
         api({ api: 'bill', r: ids.r, n: ids.n, k: ids.k }).then(renderBill).catch(function(){});
       })
+      .then(function(){ btn.disabled = false; btn.textContent = label; });
+  }
+
+  /* 請求書をメールで受け取る（会社に出すときなど）：宛名を入れて送る。送り先はご登録のメールアドレスだけ */
+  function invOpen(){ show('inv-form', true); $('btn-inv-open').hidden = true; try { $('inv-to').focus(); } catch (e) {} }
+  function invSend(){
+    clearError();
+    var btn = $('btn-inv-send'), label = btn.textContent;
+    btn.disabled = true; btn.textContent = '送っています…';
+    api({ api: 'invoice', r: ids.r, n: ids.n, k: ids.k, to: $('inv-to').value.trim() })
+      .then(function(d){
+        show('inv-form', false); $('btn-inv-open').hidden = false;
+        notice('請求書（PDF）を ' + d.sentTo + ' あてにお送りしました。数分で届きます。見当たらないときは、迷惑メールのフォルダもご確認ください。');
+        $('pay-notice').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      })
+      .catch(function(err){ error(err.message); $('pay-error').scrollIntoView({ behavior: 'smooth', block: 'center' }); })
       .then(function(){ btn.disabled = false; btn.textContent = label; });
   }
 
@@ -189,6 +206,8 @@
   $('btn-switch').addEventListener('click', askSwitch);
   $('btn-switch-no').addEventListener('click', noSwitch);
   $('btn-switch-go').addEventListener('click', doSwitch);
+  $('btn-inv-open').addEventListener('click', invOpen);
+  $('btn-inv-send').addEventListener('click', invSend);
 
   var sid = q.get('session_id');
   if (!CFG.api){ error('設定を読み込めませんでした。お手数ですが、お問い合わせください。'); return; }
