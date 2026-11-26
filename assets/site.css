@@ -144,7 +144,6 @@ section{display:grid;gap:20px;min-width:0}
 .legend i.booked{background:var(--sea)}
 .legend i.hold{background:var(--hold)}
 .legend i.pick{background:var(--pick)}
-.booked-list{margin:0;padding:0;list-style:none;display:grid;gap:4px;font-size:.9rem}
 
 /* request */
 .req{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:start}

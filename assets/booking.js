@@ -273,15 +273,7 @@
       }
     }
     $('avail-updated').textContent = state.updatedAt ? ('（'+jp(parse(state.updatedAt))+' 時点）') : '';
-
-    var list=$('booked-list'); list.textContent='';
-    var future=state.bookings.filter(function(b){ return b.to>=today; }).sort(function(a,b){ return a.from<b.from?-1:1; });
-    if (!future.length){ var li=document.createElement('li'); li.className='muted'; li.textContent='現在、予約は入っていません。'; list.appendChild(li); }
-    future.forEach(function(b){
-      var li=document.createElement('li');
-      li.textContent=(b.kind==='hold'?'仮押さえ：':'予約済み：')+jp(parse(b.from))+' 〜 '+jp(parse(b.to));
-      list.appendChild(li);
-    });
+    /* グラフの下の「仮押さえ：〇月〇日〜」の一覧は出さない（2026-11-26 社長） */
   }
 
 
