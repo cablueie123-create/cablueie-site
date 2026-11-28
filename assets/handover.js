@@ -16,7 +16,7 @@
   var FUELS = ['空', '1/4', '1/2', '3/4', '満'];
   var info = null, steps = [], at = 0, busy = false, sent = false;
   var keepNav = false; /* 写真を撮って同じ画面を描き直すときは、一番上に戻さず「次へ」のボタンが見える位置にする */
-  var st = { shots: [], extra: [], damage: null, marks: [], km: '', fuel: '', acc: null, accText: '', licNo: '', licKind: '', lic2No: '', lic2Kind: '', lic2Addr: '', agree: false, keyBack: false, sig: null };
+  var st = { shots: [], extra: [], damage: null, marks: [], km: '', fuel: '', acc: null, accText: '', parkLL: null, parkPhoto: null, licNo: '', licKind: '', lic2No: '', lic2Kind: '', lic2Addr: '', agree: false, keyBack: false, sig: null };
 
   /* ---------- 小さな道具 ---------- */
   function jp(s){ var p = String(s || '').split('-'); return p.length === 3 ? p[0] + '年' + Number(p[1]) + '月' + Number(p[2]) + '日' : ''; }
@@ -36,13 +36,13 @@
   function clean(e){ return String(e && e.message || '').replace(/^Error:\s*/, '') || FAIL; }
 
   /* 写真は長い辺を1600pxまでに小さくして、JPEGで送る */
-  function compress(file){
+  function compress(file, maxSide){
     return new Promise(function(resolve, reject){
       if (!file) return reject(new Error('none'));
       var url = URL.createObjectURL(file), img = new Image();
       img.onload = function(){
         try {
-          var max = 1600, w = img.naturalWidth, h = img.naturalHeight, sc = Math.min(1, max / Math.max(w, h));
+          var max = maxSide || 1600, w = img.naturalWidth, h = img.naturalHeight, sc = Math.min(1, max / Math.max(w, h));
           w = Math.round(w * sc); h = Math.round(h * sc);
           var c = document.createElement('canvas'); c.width = w; c.height = h;
           var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.drawImage(img, 0, 0, w, h);
@@ -144,17 +144,34 @@
     var pickup = info.mode === 'pickup';
     var body = [lead(pickup ? info.name + ' 様、ご利用ありがとうございます。車の受け取りの手続きをします。5分ほどで終わります。' : info.name + ' 様、ご利用ありがとうございました。車の返却の手続きをします。')];
     if (pickup){
-      var box = el('div', { class: 'ho-box' }, [el('div', { text: '車の場所' })]);
-      if (info.spot) box.appendChild(el('strong', { text: info.spot }));
-      if (!info.spot && !info.map) box.appendChild(el('strong', { text: info.inPlace || '予約の確定のときにお知らせした場所' }));
-      body.push(box);
-      if (info.map) body.push(el('a', { class: 'btn ghost', href: info.map, target: '_blank', rel: 'noopener', text: '地図で車の場所を見る' }));
+      body = body.concat(carBlock());
     } else {
       body.push(el('div', { class: 'ho-box' }, [el('div', { text: '返す場所' }), el('strong', { text: info.outPlace || '予約のときに決めた場所' })]));
       body.push(lead('車をその場所に止めてから、次へ進んでください。'));
     }
     frame(pickup ? '車の場所' : '返す場所に止めましたか？', body, el('div', { class: 'ho-btns' }, [btn(pickup ? '車に着きました' : '止めました', 'big', next)]));
   }
+  /* お渡しする車と置いてある場所：車名・ナンバー・前からの写真・置いた場所の写真・歩きの道案内（2026-11-28 社長：駐車場で車を探せるように） */
+  function carBlock(){
+    var out = [];
+    var place = el('div', { class: 'ho-box' }, [el('div', { text: '車の場所' }), el('strong', { text: info.spot || info.inPlace || '予約の確定のときにお知らせした場所' })]);
+    if (info.parkAt) place.appendChild(el('div', { class: 'small muted', text: info.parkAt + ' に置きました' }));
+    out.push(place);
+    if (info.route) out.push(el('div', { class: 'ho-btns' }, [el('a', { class: 'btn ghost', href: info.route, target: '_blank', rel: 'noopener', text: '車までの道案内（Googleマップ）' })]));
+    else if (info.map) out.push(el('div', { class: 'ho-btns' }, [el('a', { class: 'btn ghost', href: info.map, target: '_blank', rel: 'noopener', text: '地図で車の場所を見る' })]));
+    if (!info.route && !info.map) out.push(el('p', { class: 'small muted', text: info.mode === 'early' ? '車を置いたあと、ここに置いた場所の写真と地図が出ます。' : '車が見つからないときは、下の連絡先にご連絡ください。' }));
+    if (info.parkPhoto) out.push(photoFig(info.parkPhoto, '車を置いた場所のまわり', '車を置いた場所の写真'));
+    if (info.car || info.plate) out.push(el('div', { class: 'ho-box' }, [
+      el('div', { text: 'お渡しする車' }),
+      info.car ? el('strong', { text: info.car }) : null,
+      info.plate ? el('div', { class: 'small muted', text: 'ナンバー' }) : null,
+      info.plate ? el('div', { class: 'ho-plate', text: info.plate }) : null
+    ]));
+    if (info.carPhoto) out.push(photoFig(info.carPhoto, 'この車です（前から撮った写真）', 'お渡しする車の写真'));
+    if (info.route && info.parkAt) out.push(el('p', { class: 'small muted', text: '地図の位置は10mほどずれることがあります。最後は写真とナンバーで確かめてください。' }));
+    return out;
+  }
+  function photoFig(src, cap, alt){ return el('figure', { class: 'ho-fig' }, [el('img', { src: src, alt: alt }), el('figcaption', { class: 'small muted', text: cap })]); }
   function stepKey(){
     var body = [];
     if (info.key) body.push(el('div', { class: 'ho-box' }, [el('div', { text: '鍵の置き場所' }), el('strong', { text: info.key })]));
@@ -423,7 +440,99 @@
       el('div', { class: 'small muted', text: 'もう一度記録すると、新しい内容に置きかわります。' })
     ]));
     body.push(lead('お客様の受け取りの画面に、キズの印が灰色で出ます。貸渡証の「発メーター」「発燃料」と車の図にも入ります。'));
-    frame('貸す前の記録', body, el('div', { class: 'ho-btns' }, [btn('始める', 'big', next)]));
+    body.push(lead('空港など事務所以外で渡すときは、車を置いたあとに「車を置いた場所を知らせる」も押してください。'));
+    frame('貸す前の記録', body, el('div', { class: 'ho-btns' }, [btn('始める', 'big', next), btn('車を置いた場所を知らせる', 'ghost', function(){ steps = [stepPark]; go(0); })]));
+  }
+  function preFlow(){
+    steps = [stepPreStart];
+    SHOTS.forEach(function(s, i){ steps.push(stepShot(i)); });
+    steps.push(stepMeter, stepDamage, stepPreSend);
+    go(0);
+  }
+  /* ---------- 車を置いた場所（中江さん用）：スマホの位置・まわりの写真・ひとこと。お客様の受け取りの画面の「車の場所」がこれに変わる ---------- */
+  function stepPark(){
+    var body = [lead(info.name + ' 様にお渡しする車を置いたら、その場所で知らせてください。お客様の受け取りの画面に、この場所の地図と道案内、写真が出ます。')];
+    if (info.park) body.push(el('div', { class: 'ho-box' }, [
+      el('div', { text: '前に知らせた内容（' + info.park.at + '）' }),
+      el('strong', { text: info.park.note || (info.park.ll ? '場所（地図）だけ' : '写真だけ') }),
+      el('div', { class: 'small muted', text: 'もう一度送ると、新しい内容に置きかわります。' })
+    ]));
+    /* ① スマホの位置 */
+    var locMsg = el('p', { class: 'small', 'aria-live': 'polite' });
+    var locBtn = btn('今いる場所を記録する', 'big', getLoc);
+    function showLoc(){
+      if (!st.parkLL) return;
+      locBtn.textContent = '場所を記録し直す'; locBtn.className = 'btn ghost';
+      locMsg.textContent = '記録しました（ずれは約' + st.parkLL.acc + 'm）。' + (st.parkLL.acc > 50 ? 'ずれが大きいので、空が見える場所でもう一度押すと良くなります。' : '');
+    }
+    function getLoc(){
+      if (!navigator.geolocation){ locMsg.textContent = 'このスマホでは場所を使えません。写真と説明だけで送れます。'; return; }
+      locBtn.disabled = true; locMsg.textContent = '場所を調べています…（10秒ほど）';
+      navigator.geolocation.getCurrentPosition(function(p){
+        locBtn.disabled = false;
+        st.parkLL = { lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy || 0) };
+        showLoc();
+      }, function(e){
+        locBtn.disabled = false;
+        locMsg.textContent = e && e.code === 1 ? '場所を使うことが許可されていません。スマホの設定で、ブラウザの位置情報をオンにしてください。写真と説明だけでも送れます。' : '場所を調べられませんでした。もう一度押すか、写真と説明だけで送ってください。';
+      }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+    }
+    /* ② まわりの写真 */
+    var area = el('div', { class: 'ho-shot' }), photoMsg = el('p', { class: 'form-error', role: 'alert', hidden: '' });
+    var camBtn = btn('カメラで撮る', 'ghost', function(){ pick(true, got); });
+    function showPhoto(){
+      area.textContent = '';
+      if (st.parkPhoto){ area.appendChild(el('img', { src: st.parkPhoto.preview, alt: '置いた場所の写真' })); camBtn.textContent = '撮り直す'; }
+    }
+    function got(f){
+      photoMsg.hidden = true; area.textContent = ''; area.appendChild(lead('写真を読み込んでいます…'));
+      compress(f, 1280).then(function(r){ st.parkPhoto = r; showPhoto(); }, function(){
+        area.textContent = ''; photoMsg.textContent = 'この写真は読み込めませんでした。もう一度撮ってください。'; photoMsg.hidden = false;
+      });
+    }
+    /* ③ ひとこと */
+    var ta = el('textarea', { id: 'ho-park-note', rows: '2', maxlength: '120', placeholder: '例：空港の駐車場。ターミナルを出て右、出口側から3列目' });
+    ta.value = info.park && info.park.note || '';
+    var msg = el('p', { class: 'form-error', role: 'alert', hidden: '' });
+    var send = btn('この内容で知らせる', 'big', function(){ submitPark(ta.value, msg, send); });
+    body.push(
+      el('div', { class: 'ho-field' }, [el('strong', { text: '① 車のそばで、今いる場所を記録します' }), el('div', { class: 'ho-btns' }, [locBtn]), locMsg]),
+      el('div', { class: 'ho-field' }, [el('strong', { text: '② 車とまわりの写真を1枚' }), el('p', { class: 'small muted', text: 'ナンバーと、柱の番号や建物などの目印が入ると、お客様が見つけやすくなります。' }), area, el('div', { class: 'ho-row' }, [camBtn, btn('写真を選ぶ', 'ghost', function(){ pick(false, got); })]), photoMsg]),
+      el('div', { class: 'ho-field' }, [el('label', { for: 'ho-park-note', text: '③ 置いた場所の説明（ひとこと）' }), ta]),
+      msg);
+    frame('車を置いた場所', body, el('div', { class: 'ho-btns' }, [send, el('button', { type: 'button', class: 'ho-back', text: '← 最初の画面にもどる', onclick: preFlow })]));
+    showLoc(); showPhoto();
+  }
+  function submitPark(note, msg, send){
+    if (busy) return;
+    note = String(note || '').trim();
+    if (!st.parkLL && !note){ msg.textContent = '「今いる場所を記録する」を押すか、置いた場所の説明を書いてください。'; msg.hidden = false; return; }
+    busy = true; msg.hidden = true;
+    var label = send.textContent;
+    send.disabled = true; send.textContent = '送信しています…';
+    var data = { r: ids.r, o: ids.o, note: note,
+      lat: st.parkLL ? st.parkLL.lat : '', lng: st.parkLL ? st.parkLL.lng : '', acc: st.parkLL ? st.parkLL.acc : '',
+      photo: st.parkPhoto ? { mime: st.parkPhoto.mime, data: st.parkPhoto.data } : null };
+    fetch(CFG.api, { method: 'POST', body: JSON.stringify({ action: 'hopark', data: data }) })
+      .then(function(resp){ return resp.json(); })
+      .then(function(res){
+        if (!res || !res.ok) throw new Error((res && res.error) || FAIL);
+        busy = false;
+        var shown = [];
+        if (st.parkLL) shown.push('地図と道案内');
+        if (st.parkPhoto) shown.push('写真');
+        if (note) shown.push('説明');
+        var when = res.data && res.data.at;
+        steps = [function(){}]; at = 0;
+        frame('知らせました', [
+          lead(info.name + ' 様の受け取りの画面の「車の場所」に、' + shown.join('・') + 'が出ます。'),
+          when ? el('p', { class: 'small muted', text: '記録：' + when }) : null
+        ], null);
+      })
+      .catch(function(e){
+        busy = false; send.textContent = label; send.disabled = false;
+        msg.textContent = clean(e) + ' 写真は残っているので、もう一度押してください。'; msg.hidden = false;
+      });
   }
   function stepPreSend(){
     var body = [el('div', { class: 'ho-box' }, [
@@ -465,7 +574,7 @@
   function stepInfo(title, text){
     steps = [function(){ stepInfo(title, text); }]; at = 0;
     var body = [lead(text)];
-    if (info.map && info.mode === 'early') body.push(el('a', { class: 'btn ghost', href: info.map, target: '_blank', rel: 'noopener', text: '地図で車の場所を見る' }));
+    if (info.mode === 'early') body = body.concat(carBlock());
     frame(title, body, null);
   }
 
@@ -473,12 +582,7 @@
     info = d;
     $('ho-loading').hidden = true;
     if (d.mode === 'pre-closed') return stepInfo('受け取りが済んでいます', 'お客様の受け取りの手続きが、もう済んでいます（' + (d.pickedAt || '') + '）。貸す前の記録は、受け取りの前だけできます。');
-    if (d.mode === 'pre'){
-      steps = [stepPreStart];
-      SHOTS.forEach(function(s, i){ steps.push(stepShot(i)); });
-      steps.push(stepMeter, stepDamage, stepPreSend);
-      return go(0);
-    }
+    if (d.mode === 'pre') return preFlow();
     if (d.mode === 'early') return stepInfo('受け取りの手続きは、借りる日からです', '受け取りの手続きは、借りる日（' + jp(d.start) + '）からできます。当日、車に着いたら、このページをもう一度開いてください。鍵の置き場所も、その日に表示されます。');
     if (d.mode === 'done') return stepInfo('手続きは終わっています', '返却の手続きまで終わっています（受付：' + (d.returnedAt || '') + '）。ご利用ありがとうございました。');
     if (d.mode !== 'pickup' && d.mode !== 'return') return stepInfo('今は手続きできません', 'このご予約では、今は受け取り・返却の手続きができません。ご不明な点は、お問い合わせください。');
